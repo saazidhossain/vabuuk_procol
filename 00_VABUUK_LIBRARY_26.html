@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VABUUK | পাঠাগার - The Digital Athenaeum</title>
+    
+    <!-- Core Engine -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@300;400;500;700&family=Outfit:wght@200;300;400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vabuuk: {
+                            void: '#0F172A',      // The Infinite Depth
+                            void_deep: '#020617', // Darker Void
+                            paper: '#F2F0E9',     // The Ancient Scroll
+                            paper_dim: '#E5E2D6',
+                            saffron: '#D97706',   // Wisdom/Monk
+                            saffron_glow: '#F59E0B',
+                            stone: '#57534E',
+                            ink: '#1E293B'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                        bengali: ['Noto Serif Bengali', 'serif'],
+                        mono: ['Space Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'dust': 'dust 20s linear infinite',
+                        'shimmer': 'shimmer 3s linear infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'spin-slow': 'spin 12s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-8px)' },
+                        },
+                        dust: {
+                            '0%': { transform: 'translateY(0) translateX(0)' },
+                            '100%': { transform: 'translateY(-100px) translateX(20px)' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-1000px 0' },
+                            '100%': { backgroundPosition: '1000px 0' },
+                        }
+                    },
+                    backgroundImage: {
+                        'grain': "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.65\" numOctaves=\"3\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\" opacity=\"0.05\"/%3E%3C/svg%3E')",
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D97706; }
+
+        /* Cinematic Glass */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .glass-panel:hover {
+            border: 1px solid rgba(217, 119, 6, 0.3);
+            box-shadow: 0 0 20px rgba(217, 119, 6, 0.15);
+        }
+
+        .light-glass {
+            background: rgba(242, 240, 233, 0.85);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Glare Effect */
+        .card-glare {
+            position: absolute;
+            top: 0; left: 0; bottom: 0; right: 0;
+            background: linear-gradient(125deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.05) 45%, rgba(255,255,255,0.2) 50%, rgba(255,255,255,0.05) 55%, rgba(255,255,255,0) 100%);
+            transform: translateY(100%);
+            transition: transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+            pointer-events: none;
+        }
+        .group:hover .card-glare {
+            transform: translateY(-100%);
+            transition: transform 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        
+        /* Audio Wave Animation */
+        .bar {
+            width: 4px;
+            background: #D97706;
+            animation: equalize 1s infinite;
+        }
+        @keyframes equalize {
+            0% { height: 10px; }
+            50% { height: 40px; }
+            100% { height: 10px; }
+        }
+    </style>
+</head>
+<body class="bg-vabuuk-void text-vabuuk-paper antialiased transition-colors duration-700 overflow-x-hidden">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // --- 1. DATA REPOSITORY (THE ARCHIVE) ---
+        const TRANSLATIONS = {
+            en: {
+                library_title: "The Athenaeum",
+                library_sub: "A curated pharmacy for the modern soul.",
+                filter_all: "All Artifacts",
+                filter_read: "Manuscripts",
+                filter_watch: "Visuals",
+                filter_listen: "Audio",
+                axis_architect: "The Architect (Logic)",
+                axis_boatman: "The Boatman (Faith)",
+                search_placeholder: "Search for wisdom...",
+                bookmark_empty: "Your shelf is empty.",
+                reading_time: "min read",
+                modal_close: "Close Artifact",
+                random_wisdom: "Serendipity",
+                mode_focus: "Focus Mode",
+                mode_explore: "Explore Mode",
+                fomo_reading: "is studying",
+                fomo_listening: "is listening to",
+                fomo_location: ["Dhaka", "Chittagong", "Sylhet", "Rajshahi", "London", "New York"]
+            },
+            bn: {
+                library_title: "পাঠাগার",
+                library_sub: "আধুনিক মনের জন্য একটি কিউরেটেড ফার্মেসি।",
+                filter_all: "সকল সংগ্রহ",
+                filter_read: "পাণ্ডুলিপি",
+                filter_watch: "ভিজ্যুয়াল",
+                filter_listen: "অডিও",
+                axis_architect: "স্থপতি (যুক্তি)",
+                axis_boatman: "মাঝি (বিশ্বাস)",
+                search_placeholder: "জ্ঞানের সন্ধান করুন...",
+                bookmark_empty: "আপনার তাক খালি।",
+                reading_time: "মিনিট পাঠ",
+                modal_close: "বন্ধ করুন",
+                random_wisdom: "দৈবচয়ন",
+                mode_focus: "মনোযোগ মোড",
+                mode_explore: "অনুসন্ধান মোড",
+                fomo_reading: "পড়ছেন",
+                fomo_listening: "শুনছেন",
+                fomo_location: ["ঢাকা", "চট্টগ্রাম", "সিলেট", "রাজশাহী", "লন্ডন", "নিউ ইয়র্ক"]
+            }
+        };
+
+        const RESOURCES = [
+            { id: 1, type: "read", axis: "architect", title: { en: "The Digital Stoic", bn: "ডিজিটাল স্টোইসিজম" }, author: "Sazid Hossain", time: 12, tags: ["Philosophy", "Discipline"], cover: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80", desc: "Applying ancient stoicism to modern algorithmic addiction." },
+            { id: 2, type: "watch", axis: "boatman", title: { en: "Silence & The Soul", bn: "নীরবতা ও আত্মা" }, author: "Vabuuk Media", time: 18, tags: ["Spirituality", "Peace"], cover: "https://images.unsplash.com/photo-1518063319789-7217e6706b04?auto=format&fit=crop&w=600&q=80", desc: "Why silence is not empty, but full of answers." },
+            { id: 3, type: "read", axis: "bridge", title: { en: "The Logic of Faith", bn: "বিশ্বাসের যুক্তি" }, author: "Nexus Core", time: 8, tags: ["Synthesis", "Theology"], cover: "https://images.unsplash.com/photo-1532012197267-da84d127e765?auto=format&fit=crop&w=600&q=80", desc: "Deconstructing the false dichotomy between science and god." },
+            { id: 4, type: "listen", axis: "boatman", title: { en: "Midnight Monologues", bn: "মধ্যরাতের আলাপ" }, author: "Sazid Hossain", time: 45, tags: ["Podcast", "Reflection"], cover: "https://images.unsplash.com/photo-1478737270239-2f02b77ac618?auto=format&fit=crop&w=600&q=80", desc: "Raw, unedited thoughts on existence and purpose." },
+            { id: 5, type: "read", axis: "architect", title: { en: "Deep Work Protocols", bn: "গভীর কাজের নিয়মাবলী" }, author: "Cal Newport (Analysis)", time: 15, tags: ["Productivity", "Focus"], cover: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?auto=format&fit=crop&w=600&q=80", desc: "How to survive in a distracted economy." },
+            { id: 6, type: "watch", axis: "bridge", title: { en: "The Bengali Renaissance", bn: "বাঙালির রেনেসাঁ" }, author: "History Dept", time: 25, tags: ["History", "Culture"], cover: "https://images.unsplash.com/photo-1461360370896-922624d12aa1?auto=format&fit=crop&w=600&q=80", desc: "Lessons from Rabindranath and Nazrul for Gen Z." },
+            { id: 7, type: "listen", axis: "architect", title: { en: "Algorithm vs. Free Will", bn: "অ্যালগরিদম বনাম মুক্ত চিন্তা" }, author: "Nexus AI", time: 30, tags: ["Tech", "Ethics"], cover: "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=600&q=80", desc: "Are your thoughts your own, or just predicted patterns?" },
+            { id: 8, type: "read", axis: "boatman", title: { en: "The Art of Letting Go", bn: "ছেড়ে দেওয়ার শিল্প" }, author: "Rumi (Trans.)", time: 10, tags: ["Sufism", "Healing"], cover: "https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=600&q=80", desc: "Timeless wisdom on attachment and loss." },
+        ];
+
+        // --- 2. UTILITY COMPONENTS ---
+
+        const Icon = ({ name, size = 20, className }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        // Kinetic 3D Card with Glare
+        const Card3D = ({ children }) => {
+            const cardRef = useRef(null);
+
+            const handleMouseMove = (e) => {
+                const card = cardRef.current;
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+                const rotateX = ((y - centerY) / centerY) * -8; 
+                const rotateY = ((x - centerX) / centerX) * 8;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg) scale3d(1.02, 1.02, 1.02)`;
+            };
+
+            const handleMouseLeave = () => {
+                const card = cardRef.current;
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0) scale3d(1, 1, 1)';
+            };
+
+            return (
+                <div 
+                    ref={cardRef} 
+                    onMouseMove={handleMouseMove} 
+                    onMouseLeave={handleMouseLeave}
+                    className="transition-transform duration-300 ease-out transform-gpu h-full will-change-transform"
+                >
+                    {children}
+                </div>
+            );
+        };
+
+        // Audio Waveform
+        const AudioVisualizer = () => (
+            <div className="flex items-center justify-center gap-1 h-12">
+                {[...Array(8)].map((_, i) => (
+                    <div 
+                        key={i} 
+                        className="bar rounded-full" 
+                        style={{ 
+                            animationDelay: `${i * 0.1}s`,
+                            height: `${Math.random() * 20 + 10}px` 
+                        }} 
+                    ></div>
+                ))}
+            </div>
+        );
+
+        // --- 3. MAIN APPLICATION ---
+        function App() {
+            const [lang, setLang] = useState('en');
+            const [filterType, setFilterType] = useState('all');
+            const [filterAxis, setFilterAxis] = useState('all');
+            const [bookmarks, setBookmarks] = useState([]);
+            const [search, setSearch] = useState('');
+            const [timeMode, setTimeMode] = useState('day');
+            const [selectedItem, setSelectedItem] = useState(null);
+            const [fomo, setFomo] = useState(null);
+
+            const T = TRANSLATIONS[lang];
+
+            // Chrono-Logic
+            useEffect(() => {
+                const hour = new Date().getHours();
+                setTimeMode((hour >= 6 && hour < 18) ? 'day' : 'night');
+            }, []);
+
+            // Persistence
+            useEffect(() => {
+                const saved = localStorage.getItem('vabuuk_bookmarks');
+                const savedLang = localStorage.getItem('vabuuk_lang');
+                if (saved) setBookmarks(JSON.parse(saved));
+                if (savedLang) setLang(savedLang);
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('vabuuk_bookmarks', JSON.stringify(bookmarks));
+                localStorage.setItem('vabuuk_lang', lang);
+            }, [bookmarks, lang]);
+
+            // FOMO Engine
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    const randomLoc = T.fomo_location[Math.floor(Math.random() * T.fomo_location.length)];
+                    const randomRes = RESOURCES[Math.floor(Math.random() * RESOURCES.length)];
+                    const action = randomRes.type === 'listen' ? T.fomo_listening : T.fomo_reading;
+                    setFomo({ loc: randomLoc, action, title: randomRes.title[lang] });
+                    setTimeout(() => setFomo(null), 5000);
+                }, 15000);
+                return () => clearInterval(interval);
+            }, [lang, T]);
+
+            // Filter Logic
+            const filteredResources = RESOURCES.filter(item => {
+                const matchType = filterType === 'all' || item.type === filterType;
+                const matchAxis = filterAxis === 'all' || item.axis === filterAxis || item.axis === 'bridge';
+                const matchSearch = item.title[lang].toLowerCase().includes(search.toLowerCase()) || 
+                                  item.tags.some(t => t.toLowerCase().includes(search.toLowerCase()));
+                return matchType && matchAxis && matchSearch;
+            });
+
+            const toggleBookmark = (id) => {
+                setBookmarks(prev => prev.includes(id) ? prev.filter(b => b !== id) : [...prev, id]);
+            };
+
+            const handleRandom = () => {
+                const random = RESOURCES[Math.floor(Math.random() * RESOURCES.length)];
+                setSelectedItem(random);
+            };
+
+            // Dynamic Styles
+            const bgClass = timeMode === 'night' ? 'bg-vabuuk-void_deep text-vabuuk-paper' : 'bg-vabuuk-paper text-vabuuk-void';
+            const cardClass = timeMode === 'night' ? 'glass-panel' : 'light-glass';
+            
+            return (
+                <div className={`min-h-screen relative ${bgClass} font-sans selection:bg-vabuuk-saffron selection:text-white transition-colors duration-1000`}>
+                    
+                    {/* AMBIENT PARTICLES */}
+                    <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+                        {/* The Sun/Moon Glow */}
+                        <div className={`absolute top-0 left-1/2 -translate-x-1/2 w-[80vw] h-[80vw] bg-vabuuk-saffron rounded-full blur-[150px] opacity-10 ${timeMode === 'night' ? 'animate-pulse-slow' : 'opacity-20'}`}></div>
+                        
+                        {/* Floating Dust */}
+                        <div className="absolute w-[2px] h-[2px] bg-vabuuk-saffron rounded-full animate-dust top-1/4 left-1/4 opacity-50"></div>
+                        <div className="absolute w-[3px] h-[3px] bg-white rounded-full animate-dust top-3/4 left-1/2 opacity-30 delay-1000"></div>
+                        <div className="absolute w-[2px] h-[2px] bg-vabuuk-saffron rounded-full animate-dust top-1/2 left-3/4 opacity-40 delay-2000"></div>
+                        
+                        {/* Grain Overlay */}
+                        <div className="absolute inset-0 bg-grain opacity-20 mix-blend-overlay"></div>
+                    </div>
+
+                    {/* TOP NAVIGATION */}
+                    <nav className="relative z-50 px-4 md:px-8 py-6 flex justify-between items-center border-b border-white/5 backdrop-blur-md sticky top-0 transition-all duration-300">
+                        <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.scrollTo({top: 0, behavior: 'smooth'})}>
+                            <div className="w-10 h-10 bg-vabuuk-saffron text-white flex items-center justify-center rounded-lg font-serif font-bold text-xl shadow-[0_0_15px_rgba(217,119,6,0.3)] group-hover:rotate-45 transition-transform duration-500">V</div>
+                            <div className="hidden md:block">
+                                <h1 className={`font-serif font-bold text-xl tracking-wider uppercase ${timeMode === 'night' ? 'text-white' : 'text-vabuuk-void'}`}>VABUUK</h1>
+                                <p className="text-[9px] tracking-[0.3em] uppercase opacity-60 font-mono">The Athenaeum</p>
+                            </div>
+                        </div>
+
+                        {/* Search Bar */}
+                        <div className="flex-1 max-w-lg mx-4 md:mx-12 group">
+                            <div className={`relative flex items-center px-5 py-2.5 rounded-full border transition-all duration-300 ${timeMode === 'night' ? 'bg-white/5 border-white/10 hover:bg-white/10 focus-within:border-vabuuk-saffron/50' : 'bg-black/5 border-black/5 hover:bg-black/10 focus-within:border-vabuuk-saffron'}`}>
+                                <Icon name="search" className="opacity-50 mr-3" size={16} />
+                                <input 
+                                    type="text" 
+                                    placeholder={T.search_placeholder}
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="bg-transparent border-none outline-none w-full text-sm placeholder-opacity-40 font-mono"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="flex items-center gap-3">
+                            <button 
+                                onClick={handleRandom} 
+                                className="hidden md:flex items-center gap-2 px-4 py-2 text-[10px] font-bold uppercase tracking-widest border border-current rounded-full hover:bg-vabuuk-saffron hover:text-white hover:border-transparent transition-all hover:scale-105 active:scale-95"
+                            >
+                                <Icon name="sparkles" size={14} /> {T.random_wisdom}
+                            </button>
+                            <button 
+                                onClick={() => setLang(lang === 'en' ? 'bn' : 'en')}
+                                className="w-10 h-10 rounded-full border border-current opacity-60 hover:opacity-100 flex items-center justify-center font-bold text-xs transition-transform hover:rotate-180 duration-500"
+                            >
+                                {lang === 'en' ? 'BN' : 'EN'}
+                            </button>
+                        </div>
+                    </nav>
+
+                    {/* MAIN CONTENT AREA */}
+                    <main className="relative z-10 max-w-7xl mx-auto px-4 py-12 md:py-20">
+                        
+                        {/* HERO HEADER */}
+                        <header className="mb-20 text-center relative">
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 bg-vabuuk-saffron blur-[80px] opacity-20 animate-pulse"></div>
+                            <h2 className={`text-5xl md:text-8xl font-serif font-bold mb-6 ${lang === 'bn' ? 'font-bengali' : ''} bg-clip-text text-transparent bg-gradient-to-r from-vabuuk-saffron via-white to-vabuuk-saffron animate-shimmer bg-[length:200%_auto] tracking-tight`}>
+                                {T.library_title}
+                            </h2>
+                            <div className="flex items-center justify-center gap-4 opacity-60 font-mono text-xs tracking-widest uppercase">
+                                <span className="h-px w-8 bg-current"></span>
+                                <p className={lang === 'bn' ? 'font-bengali' : ''}>{T.library_sub}</p>
+                                <span className="h-px w-8 bg-current"></span>
+                            </div>
+                        </header>
+
+                        {/* FILTER MATRIX */}
+                        <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8 pb-8 border-b border-white/5">
+                            {/* Type Filters */}
+                            <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 scrollbar-hide">
+                                {['all', 'read', 'watch', 'listen'].map(type => (
+                                    <button 
+                                        key={type}
+                                        onClick={() => setFilterType(type)}
+                                        className={`relative px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-widest transition-all duration-300 overflow-hidden group ${filterType === type ? 'bg-vabuuk-saffron text-white shadow-[0_0_20px_rgba(217,119,6,0.3)]' : 'bg-white/5 hover:bg-white/10'}`}
+                                    >
+                                        <span className="relative z-10 flex items-center gap-2">
+                                            {type === 'read' && <Icon name="book-open" size={12} />}
+                                            {type === 'watch' && <Icon name="play-circle" size={12} />}
+                                            {type === 'listen' && <Icon name="headphones" size={12} />}
+                                            {T[`filter_${type}`]}
+                                        </span>
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Axis Filters */}
+                            <div className="flex bg-black/20 p-1.5 rounded-xl backdrop-blur-sm border border-white/5">
+                                {[
+                                    { key: 'architect', icon: 'triangle', color: 'text-slate-300' },
+                                    { key: 'all', icon: 'circle', color: 'text-vabuuk-saffron' },
+                                    { key: 'boatman', icon: 'waves', color: 'text-blue-300' }
+                                ].map((axis) => (
+                                    <button 
+                                        key={axis.key}
+                                        onClick={() => setFilterAxis(axis.key)}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold transition-all flex items-center gap-2 ${filterAxis === axis.key ? 'bg-white/10 text-white shadow-sm' : 'opacity-50 hover:opacity-100 hover:bg-white/5'}`}
+                                    >
+                                        {axis.key !== 'all' && <Icon name={axis.icon} size={12} />}
+                                        {axis.key === 'all' ? 'All' : (axis.key === 'architect' ? 'Logic' : 'Faith')}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* BOOKSHELF GRID */}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+                            {filteredResources.map((item, index) => (
+                                <div key={item.id} className="animate-float" style={{ animationDelay: `${index * 0.15}s` }}>
+                                    <Card3D>
+                                        <div 
+                                            onClick={() => setSelectedItem(item)}
+                                            className={`relative group h-full rounded-2xl overflow-hidden cursor-pointer transition-all border border-transparent ${cardClass}`}
+                                        >
+                                            {/* Image & Overlay */}
+                                            <div className="relative h-56 overflow-hidden">
+                                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent z-10 transition-opacity duration-500 group-hover:opacity-90"></div>
+                                                <img src={item.cover} className="w-full h-full object-cover transform group-hover:scale-110 group-hover:rotate-1 transition-transform duration-700" alt={item.title[lang]} />
+                                                
+                                                {/* Card Glare */}
+                                                <div className="card-glare"></div>
+
+                                                {/* Type Badge */}
+                                                <div className="absolute top-4 left-4 z-20">
+                                                    <span className="bg-black/40 backdrop-blur-md text-white text-[9px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-full border border-white/10 flex items-center gap-1.5 hover:bg-vabuuk-saffron transition-colors">
+                                                        <Icon name={item.type === 'listen' ? 'mic' : item.type === 'watch' ? 'play' : 'book'} size={10} />
+                                                        {item.type.toUpperCase()}
+                                                    </span>
+                                                </div>
+
+                                                {/* Bookmark Btn */}
+                                                <button 
+                                                    onClick={(e) => { e.stopPropagation(); toggleBookmark(item.id); }}
+                                                    className={`absolute top-4 right-4 z-20 p-2.5 rounded-full backdrop-blur-md transition-all duration-300 hover:scale-110 ${bookmarks.includes(item.id) ? 'bg-vabuuk-saffron text-white shadow-[0_0_10px_rgba(217,119,6,0.5)]' : 'bg-black/40 text-white hover:bg-white hover:text-black'}`}
+                                                >
+                                                    <Icon name="bookmark" size={14} fill={bookmarks.includes(item.id) ? "currentColor" : "none"} />
+                                                </button>
+
+                                                {/* Play Button Overlay (for Watch/Listen) */}
+                                                {(item.type === 'watch' || item.type === 'listen') && (
+                                                    <div className="absolute inset-0 z-10 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform scale-50 group-hover:scale-100">
+                                                        <div className="w-16 h-16 bg-vabuuk-saffron/90 rounded-full flex items-center justify-center text-white shadow-2xl backdrop-blur-sm">
+                                                            <Icon name="play" size={28} fill="currentColor" />
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+
+                                            {/* Content */}
+                                            <div className="p-6 relative z-20">
+                                                <div className="flex justify-between items-center mb-3">
+                                                    <span className={`text-[9px] font-mono uppercase tracking-widest px-2 py-0.5 rounded border ${item.axis === 'architect' ? 'border-slate-500 text-slate-400' : item.axis === 'boatman' ? 'border-blue-500 text-blue-300' : 'border-vabuuk-saffron text-vabuuk-saffron'}`}>
+                                                        {item.axis === 'architect' ? 'LOGIC' : item.axis === 'boatman' ? 'FAITH' : 'BRIDGE'}
+                                                    </span>
+                                                    <span className="text-[10px] opacity-50 flex items-center gap-1 font-mono">
+                                                        <Icon name="clock" size={10} /> {item.time} {T.reading_time}
+                                                    </span>
+                                                </div>
+
+                                                <h3 className={`text-lg font-serif font-bold mb-3 leading-tight group-hover:text-vabuuk-saffron transition-colors line-clamp-2 ${lang === 'bn' ? 'font-bengali' : ''}`}>
+                                                    {item.title[lang]}
+                                                </h3>
+                                                
+                                                <p className="text-xs opacity-60 line-clamp-2 mb-4 font-light leading-relaxed">
+                                                    {item.desc}
+                                                </p>
+
+                                                <div className="flex flex-wrap gap-2 mt-auto">
+                                                    {item.tags.map(tag => (
+                                                        <span key={tag} className="text-[9px] px-2 py-1 rounded bg-white/5 border border-white/5 opacity-60 hover:opacity-100 transition-opacity">
+                                                            #{tag}
+                                                        </span>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </Card3D>
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* EMPTY STATE */}
+                        {filteredResources.length === 0 && (
+                            <div className="text-center py-32 opacity-30 flex flex-col items-center">
+                                <Icon name="library" size={64} className="mb-6 animate-pulse" />
+                                <p className="font-serif text-xl">The archives are silent on this matter.</p>
+                            </div>
+                        )}
+
+                    </main>
+
+                    {/* READING MODAL (IMMERSIVE) */}
+                    {selectedItem && (
+                        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 md:p-8">
+                            <div className="absolute inset-0 bg-black/90 backdrop-blur-xl transition-opacity duration-500" onClick={() => setSelectedItem(null)}></div>
+                            
+                            <div className={`relative w-full max-w-5xl h-[90vh] flex flex-col md:flex-row overflow-hidden rounded-3xl shadow-2xl animate-fade-up ${timeMode === 'night' ? 'bg-vabuuk-void border border-white/10' : 'bg-vabuuk-paper border border-black/10'}`}>
+                                
+                                {/* Left Side: Media/Cover */}
+                                <div className="w-full md:w-1/3 bg-black relative overflow-hidden group">
+                                    <img src={selectedItem.cover} className="w-full h-full object-cover opacity-60 group-hover:opacity-40 transition-opacity duration-700 group-hover:scale-105" />
+                                    <div className="absolute inset-0 bg-gradient-to-t from-vabuuk-void via-transparent to-transparent"></div>
+                                    
+                                    <div className="absolute bottom-8 left-8 right-8 z-10">
+                                        <span className="bg-vabuuk-saffron text-white text-[10px] font-bold uppercase px-3 py-1 rounded mb-4 inline-block tracking-widest">
+                                            {selectedItem.type}
+                                        </span>
+                                        <h2 className={`text-3xl md:text-4xl font-serif font-bold text-white mb-2 ${lang === 'bn' ? 'font-bengali' : ''}`}>{selectedItem.title[lang]}</h2>
+                                        <p className="text-white/60 font-mono text-xs">Authored by {selectedItem.author}</p>
+                                    </div>
+                                </div>
+
+                                {/* Right Side: Content */}
+                                <div className="w-full md:w-2/3 overflow-y-auto p-8 md:p-12 relative bg-inherit">
+                                    {/* Close Button */}
+                                    <button onClick={() => setSelectedItem(null)} className="absolute top-6 right-6 p-2 rounded-full bg-white/5 hover:bg-white/10 transition z-50">
+                                        <Icon name="x" size={20} />
+                                    </button>
+
+                                    {/* Content Body */}
+                                    <div className="prose prose-lg dark:prose-invert max-w-none font-serif">
+                                        <div className="flex items-center gap-4 mb-8 text-sm opacity-60 font-mono border-b border-white/10 pb-4">
+                                            <span className="flex items-center gap-2"><Icon name="clock" size={14}/> {selectedItem.time} {T.reading_time}</span>
+                                            <span>•</span>
+                                            <span className="flex items-center gap-2"><Icon name="tag" size={14}/> {selectedItem.tags.join(', ')}</span>
+                                        </div>
+
+                                        <p className="lead text-2xl italic opacity-90 border-l-4 border-vabuuk-saffron pl-6 mb-10 leading-relaxed font-light">
+                                            "{selectedItem.desc}"
+                                        </p>
+                                        
+                                        {/* Dynamic Media Player */}
+                                        <div className="my-10 p-1 rounded-2xl bg-gradient-to-r from-vabuuk-saffron/20 to-transparent">
+                                            <div className="bg-black/30 backdrop-blur-md rounded-xl p-8 border border-white/5 flex flex-col items-center justify-center text-center gap-6">
+                                                {selectedItem.type === 'watch' && (
+                                                    <>
+                                                        <div className="w-20 h-20 bg-white/10 rounded-full flex items-center justify-center text-vabuuk-saffron shadow-[0_0_30px_rgba(217,119,6,0.3)] animate-pulse-slow cursor-pointer hover:scale-110 transition">
+                                                            <Icon name="play" size={32} fill="currentColor" className="ml-1" />
+                                                        </div>
+                                                        <p className="text-xs font-mono tracking-widest uppercase opacity-60">Start Cinematic Experience</p>
+                                                    </>
+                                                )}
+                                                {selectedItem.type === 'listen' && (
+                                                    <>
+                                                        <AudioVisualizer />
+                                                        <div className="w-full bg-white/10 h-1 rounded-full mt-4 overflow-hidden relative">
+                                                            <div className="absolute left-0 top-0 h-full w-1/3 bg-vabuuk-saffron"></div>
+                                                        </div>
+                                                        <div className="flex justify-between w-full text-[10px] font-mono opacity-50">
+                                                            <span>12:45</span>
+                                                            <span>{selectedItem.time}:00</span>
+                                                        </div>
+                                                        <div className="flex gap-8 mt-2 items-center">
+                                                            <Icon name="skip-back" size={20} className="opacity-50 hover:opacity-100 cursor-pointer" />
+                                                            <div className="w-12 h-12 bg-vabuuk-saffron rounded-full flex items-center justify-center text-white cursor-pointer hover:scale-105 transition"><Icon name="pause" size={20} fill="currentColor" /></div>
+                                                            <Icon name="skip-forward" size={20} className="opacity-50 hover:opacity-100 cursor-pointer" />
+                                                        </div>
+                                                    </>
+                                                )}
+                                                {selectedItem.type === 'read' && (
+                                                    <div className="text-center opacity-60">
+                                                        <Icon name="book-open" size={48} className="mx-auto mb-4 opacity-50" />
+                                                        <p className="font-mono text-xs uppercase tracking-widest">Full Manuscript Available</p>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <p>
+                                            In an age of infinite scrolling, the ability to sit with a single thought is a superpower. 
+                                            This artifact explores the intersection of <strong>{selectedItem.axis === 'architect' ? 'Logical Structure' : 'Spiritual Flow'}</strong> and modern necessity.
+                                        </p>
+                                        <p>
+                                            We argue that true freedom is not the absence of constraints, but the ability to choose your constraints wisely. 
+                                            As the Bengali proverb goes: <em>"Without a bank, the river is just a flood."</em>
+                                        </p>
+                                        
+                                        <h3 className="text-vabuuk-saffron mt-10 mb-6 text-xl font-bold uppercase tracking-widest flex items-center gap-3">
+                                            <span className="w-8 h-px bg-vabuuk-saffron"></span> The Core Thesis
+                                        </h3>
+                                        <p>
+                                            To dismantle the misconception, we must first acknowledge why it is attractive. 
+                                            Only then can we apply the <strong>Steelman Tactic</strong> to strengthen the opposing view before deconstructing it with empirical data.
+                                        </p>
+                                    </div>
+
+                                    {/* Action Footer */}
+                                    <div className="mt-16 pt-8 border-t border-white/10 flex justify-between items-center">
+                                        <button className="flex items-center gap-2 text-sm opacity-60 hover:opacity-100 hover:text-vabuuk-saffron transition">
+                                            <Icon name="share-2" size={16} /> Share Artifact
+                                        </button>
+                                        <button className="bg-vabuuk-saffron text-white px-8 py-3 rounded-full font-bold text-xs tracking-[0.2em] uppercase hover:bg-yellow-600 transition shadow-[0_0_20px_rgba(217,119,6,0.4)] flex items-center gap-3">
+                                            Complete & Mark as Read <Icon name="check" size={16} />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* FOMO TICKER (Bottom Left) */}
+                    {fomo && (
+                        <div className="fixed bottom-6 left-6 z-50 animate-fade-up pointer-events-none">
+                            <div className="glass-panel px-4 py-3 rounded-xl flex items-center gap-3 shadow-2xl">
+                                <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></div>
+                                <div className="text-xs">
+                                    <p className="opacity-60 font-mono">Someone in <span className="text-vabuuk-saffron font-bold">{fomo.loc}</span> {fomo.action}</p>
+                                    <p className="font-bold font-serif truncate max-w-[200px]">{fomo.title}</p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* BOOKMARK SIDEBAR (Bottom Right) */}
+                    {bookmarks.length > 0 && (
+                        <div className="fixed bottom-6 right-6 z-40 group">
+                            <div className="relative">
+                                <button className="bg-vabuuk-void border border-vabuuk-saffron text-vabuuk-saffron w-14 h-14 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(217,119,6,0.3)] hover:scale-110 transition z-50">
+                                    <Icon name="bookmark" size={24} fill="currentColor" />
+                                    <span className="absolute -top-1 -right-1 bg-white text-black text-[10px] font-bold w-5 h-5 flex items-center justify-center rounded-full">
+                                        {bookmarks.length}
+                                    </span>
+                                </button>
+                                
+                                {/* Expanded List on Hover */}
+                                <div className="absolute bottom-full right-0 mb-4 w-72 opacity-0 scale-95 pointer-events-none group-hover:opacity-100 group-hover:scale-100 group-hover:pointer-events-auto transition-all duration-300 origin-bottom-right">
+                                    <div className="bg-vabuuk-void_deep border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                                        <div className="p-3 border-b border-white/10 bg-white/5">
+                                            <h4 className="text-[10px] font-bold uppercase tracking-widest text-vabuuk-saffron">Saved Artifacts</h4>
+                                        </div>
+                                        <div className="max-h-64 overflow-y-auto">
+                                            {RESOURCES.filter(r => bookmarks.includes(r.id)).map(saved => (
+                                                <div key={saved.id} onClick={() => setSelectedItem(saved)} className="flex items-center gap-3 p-3 hover:bg-white/5 cursor-pointer transition border-b border-white/5 last:border-0">
+                                                    <img src={saved.cover} className="w-10 h-10 rounded object-cover opacity-80" />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="text-xs font-serif font-bold truncate text-white">{saved.title[lang]}</p>
+                                                        <p className="text-[9px] opacity-50 font-mono uppercase">{saved.type}</p>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* FOOTER */}
+                    <footer className="mt-24 border-t border-white/5 py-12 text-center relative z-10">
+                        <div className="w-12 h-12 bg-vabuuk-saffron mx-auto rounded-full flex items-center justify-center text-white font-serif font-bold text-2xl mb-6 shadow-[0_0_20px_rgba(217,119,6,0.4)]">V</div>
+                        <p className={`text-xl font-serif italic opacity-70 mb-8 max-w-lg mx-auto leading-relaxed ${lang === 'bn' ? 'font-bengali' : ''}`}>
+                            "ভাবনায় যুক্তি, বিশ্বাসে মুক্তি"
+                        </p>
+                        <p className="text-[10px] font-mono uppercase tracking-[0.3em] opacity-30">© 2026 VABUUK Archives. Dhaka.</p>
+                    </footer>
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

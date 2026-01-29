@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VABUUK | আশ্রম - The Digital Sanctuary</title>
+    
+    <!-- Core Engine -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Noto+Serif+Bengali:wght@300;500&family=Outfit:wght@200;300;400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vabuuk: {
+                            void: '#0F172A',
+                            void_deep: '#020617',
+                            paper: '#F2F0E9',
+                            saffron: '#D97706',
+                            saffron_glow: '#F59E0B',
+                            ash: '#64748B'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                        bengali: ['Noto Serif Bengali', 'serif'],
+                        mono: ['Space Mono', 'monospace'],
+                    },
+                    animation: {
+                        'breathe-in': 'breatheIn 4s ease-in-out forwards',
+                        'breathe-hold': 'breatheHold 7s linear forwards',
+                        'breathe-out': 'breatheOut 8s ease-in-out forwards',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'float': 'float 6s ease-in-out infinite',
+                        'burn': 'burn 1.5s ease-out forwards',
+                    },
+                    keyframes: {
+                        breatheIn: {
+                            '0%': { transform: 'scale(1)', opacity: 0.5 },
+                            '100%': { transform: 'scale(1.5)', opacity: 1 },
+                        },
+                        breatheHold: {
+                            '0%': { transform: 'scale(1.5)', opacity: 1 },
+                            '100%': { transform: 'scale(1.5)', opacity: 1 },
+                        },
+                        breatheOut: {
+                            '0%': { transform: 'scale(1.5)', opacity: 1 },
+                            '100%': { transform: 'scale(1)', opacity: 0.5 },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        burn: {
+                            '0%': { opacity: 1, transform: 'scale(1) translateY(0)', filter: 'blur(0)' },
+                            '50%': { opacity: 0.8, transform: 'scale(1.1) translateY(-20px)', filter: 'blur(2px)' },
+                            '100%': { opacity: 0, transform: 'scale(0) translateY(-50px)', filter: 'blur(10px)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .active-mode {
+            border-color: #D97706;
+            background: rgba(217, 119, 6, 0.1);
+            box-shadow: 0 0 30px -10px rgba(217, 119, 6, 0.3);
+        }
+
+        /* Particle Container */
+        .particles { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+        .particle {
+            position: absolute;
+            background: #D97706;
+            border-radius: 50%;
+            opacity: 0;
+        }
+    </style>
+</head>
+<body class="bg-vabuuk-void_deep text-vabuuk-paper antialiased h-screen overflow-hidden selection:bg-vabuuk-saffron selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- 1. DATA & QUOTES ---
+        const QUOTES = [
+            { text: "We suffer more often in imagination than in reality.", author: "Seneca" },
+            { text: "Silence is not empty. It is full of answers.", author: "Rumi" },
+            { text: "The river does not wait to be clear to flow.", author: "The Boatman" },
+            { text: "Almost everything will work again if you unplug it for a few minutes.", author: "Anne Lamott" },
+            { text: "ভাবনায় যুক্তি, বিশ্বাসে মুক্তি।", author: "Vabuuk" }
+        ];
+
+        // --- 2. COMPONENTS ---
+
+        const Icon = ({ name, size = 24, className }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        // --- 3. MAIN APP ---
+        function App() {
+            const [activeTab, setActiveTab] = useState('void'); // void, focus, burn
+            const [quote, setQuote] = useState(QUOTES[0]);
+            
+            // Focus Timer State
+            const [timeLeft, setTimeLeft] = useState(25 * 60);
+            const [isTimerRunning, setIsTimerRunning] = useState(false);
+
+            // Breath State
+            const [breathPhase, setBreathPhase] = useState('Inhale'); // Inhale, Hold, Exhale
+            
+            // Burn Journal State
+            const [burnText, setBurnText] = useState('');
+            const [isBurning, setIsBurning] = useState(false);
+
+            // --- LOGIC HOOKS ---
+
+            // Random Quote on Load
+            useEffect(() => {
+                setQuote(QUOTES[Math.floor(Math.random() * QUOTES.length)]);
+            }, [activeTab]);
+
+            // Timer Logic
+            useEffect(() => {
+                let interval = null;
+                if (isTimerRunning && timeLeft > 0) {
+                    interval = setInterval(() => setTimeLeft(prev => prev - 1), 1000);
+                } else if (timeLeft === 0) {
+                    setIsTimerRunning(false);
+                }
+                return () => clearInterval(interval);
+            }, [isTimerRunning, timeLeft]);
+
+            // Breathing Logic (4-7-8 Technique)
+            useEffect(() => {
+                if (activeTab !== 'void') return;
+                
+                const breatheCycle = async () => {
+                    setBreathPhase('Inhale (4s)');
+                    await new Promise(r => setTimeout(r, 4000));
+                    setBreathPhase('Hold (7s)');
+                    await new Promise(r => setTimeout(r, 7000));
+                    setBreathPhase('Exhale (8s)');
+                    await new Promise(r => setTimeout(r, 8000));
+                    breatheCycle();
+                };
+                
+                breatheCycle();
+                return () => {}; // Cleanup not strictly needed for this simplified version
+            }, [activeTab]);
+
+            // --- HANDLERS ---
+
+            const formatTime = (seconds) => {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${m}:${s < 10 ? '0' : ''}${s}`;
+            };
+
+            const handleBurn = () => {
+                if (!burnText) return;
+                setIsBurning(true);
+                setTimeout(() => {
+                    setBurnText('');
+                    setIsBurning(false);
+                }, 1500); // Animation duration
+            };
+
+            // --- RENDER ---
+            return (
+                <div className="flex flex-col h-screen relative">
+                    
+                    {/* AMBIENT BACKGROUND */}
+                    <div className="absolute inset-0 z-0">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[60vw] h-[60vw] bg-vabuuk-saffron rounded-full blur-[150px] opacity-5 animate-pulse-slow"></div>
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')] opacity-10"></div>
+                    </div>
+
+                    {/* HEADER */}
+                    <header className="relative z-20 p-6 flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="w-8 h-8 bg-vabuuk-saffron text-white flex items-center justify-center rounded font-serif font-bold">V</div>
+                            <h1 className="font-serif font-bold tracking-widest text-white/80">ASHRAM</h1>
+                        </div>
+                        <div className="flex gap-4">
+                            <button onClick={() => setActiveTab('void')} className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'void' ? 'bg-white/10 text-vabuuk-saffron' : 'opacity-40 hover:opacity-100'}`}>The Void</button>
+                            <button onClick={() => setActiveTab('focus')} className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'focus' ? 'bg-white/10 text-vabuuk-saffron' : 'opacity-40 hover:opacity-100'}`}>Focus</button>
+                            <button onClick={() => setActiveTab('burn')} className={`px-4 py-2 rounded-full text-xs font-bold uppercase tracking-widest transition-all ${activeTab === 'burn' ? 'bg-white/10 text-vabuuk-saffron' : 'opacity-40 hover:opacity-100'}`}>The Pyre</button>
+                        </div>
+                    </header>
+
+                    {/* MAIN CONTENT */}
+                    <main className="flex-1 relative z-10 flex flex-col justify-center items-center p-6 text-center">
+                        
+                        {/* MODE: THE VOID (Breathing) */}
+                        {activeTab === 'void' && (
+                            <div className="animate-float">
+                                <div className="relative w-64 h-64 md:w-96 md:h-96 flex items-center justify-center">
+                                    {/* Pulse Rings */}
+                                    <div className={`absolute inset-0 rounded-full border border-vabuuk-saffron/20 transition-all duration-[4000ms] ${breathPhase.includes('Inhale') ? 'scale-150 opacity-0' : 'scale-100 opacity-50'}`}></div>
+                                    <div className={`absolute inset-4 rounded-full border border-vabuuk-saffron/30 transition-all duration-[4000ms] ${breathPhase.includes('Inhale') ? 'scale-125 opacity-0' : 'scale-100 opacity-50'}`}></div>
+                                    
+                                    {/* Core */}
+                                    <div className={`w-32 h-32 rounded-full bg-gradient-to-br from-vabuuk-saffron to-vabuuk-saffron_glow blur-2xl transition-all duration-[4000ms] ${breathPhase.includes('Inhale') ? 'scale-150 opacity-80' : breathPhase.includes('Hold') ? 'scale-150 opacity-100' : 'scale-100 opacity-40'}`}></div>
+                                    
+                                    <div className="absolute inset-0 flex items-center justify-center z-10">
+                                        <div className="font-serif text-2xl md:text-4xl font-bold tracking-widest text-white drop-shadow-lg">
+                                            {breathPhase.split(' ')[0]}
+                                        </div>
+                                    </div>
+                                </div>
+                                <p className="mt-12 opacity-40 font-mono text-xs uppercase tracking-[0.3em]">Synchronize Your Pulse</p>
+                            </div>
+                        )}
+
+                        {/* MODE: FOCUS (Timer) */}
+                        {activeTab === 'focus' && (
+                            <div className="max-w-md w-full">
+                                <div className="glass-panel p-8 rounded-full aspect-square flex flex-col items-center justify-center relative overflow-hidden group">
+                                    <div className="absolute inset-0 bg-vabuuk-saffron/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                    
+                                    <div className="text-7xl md:text-9xl font-mono font-bold text-white tracking-tighter mb-4">
+                                        {formatTime(timeLeft)}
+                                    </div>
+                                    
+                                    <div className="flex gap-4 relative z-10">
+                                        <button 
+                                            onClick={() => setIsTimerRunning(!isTimerRunning)}
+                                            className={`w-16 h-16 rounded-full flex items-center justify-center text-white shadow-xl transition-transform hover:scale-110 ${isTimerRunning ? 'bg-vabuuk-void_deep border border-red-500/50' : 'bg-vabuuk-saffron'}`}
+                                        >
+                                            <Icon name={isTimerRunning ? "pause" : "play"} fill="currentColor" />
+                                        </button>
+                                        <button 
+                                            onClick={() => { setIsTimerRunning(false); setTimeLeft(25 * 60); }}
+                                            className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center hover:bg-white/10 transition-colors"
+                                        >
+                                            <Icon name="rotate-ccw" />
+                                        </button>
+                                    </div>
+                                </div>
+                                
+                                <div className="mt-8 text-center space-y-2">
+                                    <div className="text-xs font-mono uppercase opacity-40 tracking-widest">Active Task</div>
+                                    <input type="text" placeholder="What are you building?" className="bg-transparent text-center border-b border-white/10 focus:border-vabuuk-saffron outline-none w-full py-2 text-xl font-serif placeholder-white/20" />
+                                </div>
+                            </div>
+                        )}
+
+                        {/* MODE: THE PYRE (Burn Journal) */}
+                        {activeTab === 'burn' && (
+                            <div className="max-w-xl w-full relative">
+                                <h2 className="text-sm font-mono uppercase tracking-widest opacity-60 mb-6 text-center">Write your burden. Watch it burn.</h2>
+                                
+                                <div className={`glass-panel rounded-xl p-1 relative transition-all duration-1000 ${isBurning ? 'animate-burn' : ''}`}>
+                                    <textarea 
+                                        value={burnText}
+                                        onChange={(e) => setBurnText(e.target.value)}
+                                        placeholder="I am worried about..."
+                                        className="w-full h-48 bg-vabuuk-void_deep/50 p-6 rounded-lg text-white/80 focus:outline-none resize-none font-serif text-lg leading-relaxed placeholder-white/10"
+                                        disabled={isBurning}
+                                    ></textarea>
+                                </div>
+
+                                <button 
+                                    onClick={handleBurn}
+                                    disabled={!burnText || isBurning}
+                                    className={`mt-8 mx-auto px-8 py-3 rounded-full font-bold uppercase tracking-[0.2em] flex items-center gap-3 transition-all duration-500 ${!burnText ? 'opacity-0 translate-y-4' : 'opacity-100 translate-y-0 bg-red-900/50 border border-red-500/50 hover:bg-red-600 hover:text-white hover:border-transparent hover:shadow-[0_0_30px_rgba(220,38,38,0.4)]'}`}
+                                >
+                                    <Icon name="flame" size={18} /> Burn it
+                                </button>
+                            </div>
+                        )}
+
+                    </main>
+
+                    {/* FOOTER QUOTE */}
+                    <footer className="relative z-20 p-8 text-center">
+                        <p className="font-serif italic text-lg opacity-60 mb-2">"{quote.text}"</p>
+                        <p className="text-[10px] font-mono uppercase tracking-widest opacity-30">— {quote.author}</p>
+                    </footer>
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

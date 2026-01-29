@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VABUUK | NEXUS OS - Command Center</title>
+    
+    <!-- Core Engine -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=JetBrains+Mono:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vabuuk: {
+                            void: '#0F172A',
+                            void_deep: '#020617',
+                            panel: '#1E293B',
+                            paper: '#F2F0E9',
+                            saffron: '#D97706',
+                            saffron_glow: '#F59E0B',
+                            success: '#10B981',
+                            danger: '#EF4444'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    animation: {
+                        'pulse-slow': 'pulse 3s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-in': 'slideIn 0.3s ease-out forwards',
+                    },
+                    keyframes: {
+                        slideIn: {
+                            '0%': { opacity: 0, transform: 'translateX(20px)' },
+                            '100%': { opacity: 1, transform: 'translateX(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D97706; }
+
+        .glass-sidebar {
+            background: rgba(15, 23, 42, 0.95);
+            border-right: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .agent-card {
+            transition: all 0.3s ease;
+        }
+        .agent-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px -10px rgba(217, 119, 6, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-vabuuk-void_deep text-vabuuk-paper antialiased h-screen overflow-hidden selection:bg-vabuuk-saffron selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- 1. AGENT PROTOCOLS (PROMPT TEMPLATES) ---
+        const AGENTS = [
+            {
+                id: 'synthesizer',
+                name: 'The Synthesizer',
+                role: 'Research & Deconstruction',
+                icon: 'microscope',
+                desc: 'Turns raw information into Wisdom using the Logic-Faith Matrix.',
+                prompt_template: (input) => `
+ACT AS: The Vabuuk Synthesizer (The Keeper of Archives).
+GOAL: Synthesize this raw input into a "Vabuuk Insight Brief".
+
+INPUT MATERIAL:
+"${input}"
+
+PROTOCOL:
+1. THE NOISE FILTER: Extract the Core Thesis (1 sentence) and the Strongest Counter-Argument (Steelman).
+2. THE CULTURAL BRIDGE: Connect this topic to a Bengali proverb, Sufi teaching, or local habit.
+3. THE LOGIC-FAITH MATRIX: Map the Architect's View (Data) vs. The Boatman's View (Spirituality).
+4. CONTENT ANGLES: Generate 3 angles: "Myth Buster", "Modern Monk", "Future Sight".
+
+Output in Vabuuk Standard Markdown.
+`
+            },
+            {
+                id: 'critic',
+                name: 'The Critic',
+                role: 'Script Analysis',
+                icon: 'scale',
+                desc: 'Ruthlessly cuts fluff while preserving empathy. Checks for Bishoy Da compliance.',
+                prompt_template: (input) => `
+ACT AS: The Vabuuk Critic (The Benevolent Iconoclast).
+GOAL: Critique and Rewrite this draft.
+
+DRAFT INPUT:
+"${input}"
+
+PROTOCOL:
+1. THE TEARDOWN: Identify Logical Fallacies, Ad Hominem attacks (violation of Bishoy Da), and weak hooks.
+2. THE RECONSTRUCTION: Rewrite into TWO formats:
+   - OPTION A: Vector Script (Video Essay) - Structure: Hook -> Turn -> Bridge -> Boat.
+   - OPTION B: Micro-Dose (Reel) - Structure: Pattern Interrupt -> Micro-Logic -> Open Question.
+3. THE REPORT: List exactly 3 things wrong with the original draft.
+`
+            },
+            {
+                id: 'visual',
+                name: 'Visual Architect',
+                role: 'Cinematography & AI Art',
+                icon: 'aperture',
+                desc: 'Generates Midjourney prompts and Pexels search terms.',
+                prompt_template: (input) => `
+ACT AS: The Vabuuk Visual Architect (The Silent Geometer).
+GOAL: Create a Visual Direction Board for this concept.
+
+CONCEPT/SCRIPT:
+"${input}"
+
+PROTOCOL:
+1. METAPHOR MATCH: Assign a core visual metaphor (e.g., "A calm lake disturbed by a stone").
+2. SCENE BLUEPRINT:
+   - A-Roll: Sazid's facial emotion (Stoic/Intense).
+   - B-Roll: Exact Pexels/Pixabay search terms.
+3. AI ART PROMPTS: Generate 3 Midjourney prompts using the "Institutional Sufism" aesthetic (Saffron, Deep Slate, Geometry, Ken Burns effect).
+`
+            },
+            {
+                id: 'sentinel',
+                name: 'The Sentinel',
+                role: 'Anti-Procrastination',
+                icon: 'shield-alert',
+                desc: 'Smash perfectionism. The "Ruthless Monk" who forces you to ship.',
+                prompt_template: (input) => `
+ACT AS: The Vabuuk Sentinel (The Ruthless Monk).
+GOAL: Unblock the user immediately.
+
+USER COMPLAINT:
+"${input}"
+
+PROTOCOL:
+1. DIAGNOSIS: Is it Technical Friction, Cognitive Load, or Emotional Block?
+2. INTERVENTION: Give ONE micro-command.
+   - If Tech: "Switch to mobile voice note."
+   - If Overwhelmed: "2-Minute Rule - Just name the folder."
+   - If Perfectionism: "Ship the B-Minus version."
+3. MOMENTUM KICK: A tiny, ridiculous dare to break tension.
+`
+            },
+            {
+                id: 'alchemist',
+                name: 'The Alchemist',
+                role: 'Distribution',
+                icon: 'flask-conical',
+                desc: 'Transmutes one script into LinkedIn, Twitter, and FB formats.',
+                prompt_template: (input) => `
+ACT AS: The Vabuuk Alchemist (The Strategic Sage).
+GOAL: Repurpose this script into 4 formats (CODE Methodology).
+
+SOURCE SCRIPT:
+"${input}"
+
+PROTOCOL:
+1. EXTRACT: The "Golden Sentence" and "One Big Question".
+2. TRANSMUTE:
+   - LINKEDIN (Digital Stoic): Professional, paradoxical headline, bullet points.
+   - FACEBOOK (Digital Adda): Conversational, "Subjective Da" style, starts with a question.
+   - TWITTER (The Sniper): Thread structure, punchy, controversial.
+   - INSTAGRAM (The Meta): Overlay text for a "Behind the Scenes" story.
+`
+            }
+        ];
+
+        // --- 2. COMPONENTS ---
+
+        const Icon = ({ name, size = 20, className }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        const Toast = ({ msg, show }) => (
+            <div className={`fixed bottom-8 right-8 bg-vabuuk-saffron text-white px-6 py-3 rounded-lg shadow-2xl flex items-center gap-3 transition-all duration-300 transform ${show ? 'translate-y-0 opacity-100' : 'translate-y-10 opacity-0'}`}>
+                <Icon name="check-circle" size={20} />
+                <span className="font-bold text-sm tracking-wide">{msg}</span>
+            </div>
+        );
+
+        // --- 3. MAIN APP ---
+        function App() {
+            const [activeAgent, setActiveAgent] = useState('synthesizer');
+            const [input, setInput] = useState('');
+            const [showToast, setShowToast] = useState(false);
+            const [currentTime, setCurrentTime] = useState(new Date().toLocaleTimeString());
+
+            // Clock
+            useEffect(() => {
+                const timer = setInterval(() => setCurrentTime(new Date().toLocaleTimeString()), 1000);
+                return () => clearInterval(timer);
+            }, []);
+
+            const currentAgent = AGENTS.find(a => a.id === activeAgent);
+
+            const handleCopy = () => {
+                if (!input.trim()) return;
+                const fullPrompt = currentAgent.prompt_template(input);
+                navigator.clipboard.writeText(fullPrompt);
+                setShowToast(true);
+                setTimeout(() => setShowToast(false), 3000);
+            };
+
+            return (
+                <div className="flex h-screen w-full">
+                    
+                    {/* LEFT SIDEBAR */}
+                    <aside className="w-20 md:w-64 glass-sidebar flex flex-col justify-between shrink-0 z-20">
+                        <div>
+                            {/* Header */}
+                            <div className="p-6 flex items-center gap-3 border-b border-white/5">
+                                <div className="w-8 h-8 bg-vabuuk-saffron text-white flex items-center justify-center rounded font-serif font-bold text-xl">V</div>
+                                <div className="hidden md:block">
+                                    <h1 className="font-serif font-bold tracking-widest text-lg text-white">NEXUS</h1>
+                                    <p className="text-[9px] font-mono text-vabuuk-saffron uppercase tracking-[0.2em]">Core v3.0</p>
+                                </div>
+                            </div>
+
+                            {/* Agent Menu */}
+                            <nav className="p-4 space-y-2">
+                                <div className="text-[10px] font-mono uppercase opacity-40 px-3 mb-2 hidden md:block">Active Agents</div>
+                                {AGENTS.map(agent => (
+                                    <button
+                                        key={agent.id}
+                                        onClick={() => setActiveAgent(agent.id)}
+                                        className={`w-full flex items-center gap-4 px-3 py-3 rounded-lg transition-all duration-200 group ${activeAgent === agent.id ? 'bg-vabuuk-saffron text-white shadow-lg' : 'text-white/60 hover:bg-white/5 hover:text-white'}`}
+                                    >
+                                        <Icon name={agent.icon} size={20} className={activeAgent === agent.id ? 'animate-pulse-slow' : ''} />
+                                        <div className="hidden md:block text-left">
+                                            <div className="font-bold text-sm tracking-wide">{agent.name}</div>
+                                        </div>
+                                    </button>
+                                ))}
+                            </nav>
+                        </div>
+
+                        {/* System Status */}
+                        <div className="p-6 border-t border-white/5 hidden md:block">
+                            <div className="flex items-center gap-3 mb-2">
+                                <div className="w-2 h-2 rounded-full bg-vabuuk-success animate-pulse"></div>
+                                <span className="text-xs font-mono text-vabuuk-success">SYSTEM ONLINE</span>
+                            </div>
+                            <div className="text-xs font-mono opacity-40">{currentTime}</div>
+                            <div className="text-[10px] font-mono opacity-30 mt-1">Savar, Dhaka</div>
+                        </div>
+                    </aside>
+
+                    {/* MAIN WORKSPACE */}
+                    <main className="flex-1 flex flex-col relative bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+                        
+                        {/* Header Area */}
+                        <header className="px-8 py-6 border-b border-white/5 flex justify-between items-end bg-vabuuk-void/90 backdrop-blur">
+                            <div>
+                                <h2 className="text-3xl font-serif font-bold text-white mb-1 flex items-center gap-3 animate-slide-in">
+                                    <Icon name={currentAgent.icon} size={32} className="text-vabuuk-saffron" />
+                                    {currentAgent.name}
+                                </h2>
+                                <p className="text-sm font-light opacity-60 max-w-xl">{currentAgent.desc}</p>
+                            </div>
+                            <div className="hidden md:block">
+                                <div className="text-right">
+                                    <div className="text-[10px] font-mono uppercase opacity-40 tracking-widest">Protocol ID</div>
+                                    <div className="font-mono text-vabuuk-saffron">VBK-{currentAgent.id.toUpperCase()}-01</div>
+                                </div>
+                            </div>
+                        </header>
+
+                        {/* Workspace Body */}
+                        <div className="flex-1 p-4 md:p-8 overflow-y-auto flex flex-col md:flex-row gap-8">
+                            
+                            {/* Input Zone */}
+                            <div className="flex-1 flex flex-col">
+                                <div className="bg-vabuuk-panel rounded-xl border border-white/5 p-1 flex-1 flex flex-col shadow-2xl">
+                                    <div className="bg-vabuuk-void_deep px-4 py-2 rounded-t-lg border-b border-white/5 flex justify-between items-center">
+                                        <span className="text-xs font-mono opacity-50 uppercase">Input Terminal</span>
+                                        <div className="flex gap-2">
+                                            <span className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/50"></span>
+                                            <span className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/50"></span>
+                                            <span className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/50"></span>
+                                        </div>
+                                    </div>
+                                    <textarea 
+                                        value={input}
+                                        onChange={(e) => setInput(e.target.value)}
+                                        placeholder={`Enter raw data for ${currentAgent.name}...\n(e.g., Draft script, URL, Rant, or Procrastination complaint)`}
+                                        className="w-full flex-1 bg-transparent p-6 text-white font-mono text-sm focus:outline-none resize-none placeholder-white/20"
+                                        spellCheck="false"
+                                    ></textarea>
+                                </div>
+                                
+                                <button 
+                                    onClick={handleCopy}
+                                    disabled={!input.trim()}
+                                    className={`mt-6 w-full py-4 rounded-xl font-bold uppercase tracking-[0.2em] flex items-center justify-center gap-3 transition-all duration-300 ${!input.trim() ? 'bg-white/5 text-white/20 cursor-not-allowed' : 'bg-vabuuk-saffron hover:bg-yellow-600 text-white shadow-[0_0_20px_rgba(217,119,6,0.3)] hover:shadow-[0_0_30px_rgba(217,119,6,0.5)] transform hover:-translate-y-1'}`}
+                                >
+                                    <Icon name="cpu" size={20} />
+                                    Generate & Copy System Prompt
+                                </button>
+                            </div>
+
+                            {/* Info / Tips Sidebar (Right) */}
+                            <div className="w-full md:w-80 space-y-6">
+                                {/* Instruction Card */}
+                                <div className="bg-vabuuk-panel border border-white/5 p-6 rounded-xl relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
+                                        <Icon name={currentAgent.icon} size={100} />
+                                    </div>
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-vabuuk-saffron mb-4">Operational Guide</h3>
+                                    <ul className="space-y-3 text-sm opacity-70 font-light">
+                                        <li className="flex gap-2">
+                                            <span className="text-vabuuk-saffron">•</span>
+                                            <span>Enter your raw text, link, or idea on the left.</span>
+                                        </li>
+                                        <li className="flex gap-2">
+                                            <span className="text-vabuuk-saffron">•</span>
+                                            <span>Click "Generate" to build the <b>Agent Protocol</b>.</span>
+                                        </li>
+                                        <li className="flex gap-2">
+                                            <span className="text-vabuuk-saffron">•</span>
+                                            <span>Paste the copied result into <b>Gemini</b> or <b>ChatGPT</b>.</span>
+                                        </li>
+                                    </ul>
+                                </div>
+
+                                {/* Quick Links */}
+                                <div className="bg-vabuuk-panel border border-white/5 p-6 rounded-xl">
+                                    <h3 className="text-xs font-bold uppercase tracking-widest text-vabuuk-saffron mb-4">External Uplink</h3>
+                                    <div className="space-y-2">
+                                        {[
+                                            { name: 'Gemini Advanced', url: 'https://gemini.google.com', icon: 'zap' },
+                                            { name: 'Pexels Stock', url: 'https://pexels.com', icon: 'image' },
+                                            { name: 'NotebookLM', url: 'https://notebooklm.google.com', icon: 'book' }
+                                        ].map((link, i) => (
+                                            <a key={i} href={link.url} target="_blank" className="flex items-center justify-between p-3 rounded bg-white/5 hover:bg-white/10 transition group">
+                                                <span className="text-sm font-mono opacity-80 group-hover:text-white transition">{link.name}</span>
+                                                <Icon name="external-link" size={14} className="opacity-40 group-hover:text-vabuuk-saffron" />
+                                            </a>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </main>
+
+                    {/* Toast Notification */}
+                    <Toast msg="System Protocol Copied to Clipboard" show={showToast} />
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

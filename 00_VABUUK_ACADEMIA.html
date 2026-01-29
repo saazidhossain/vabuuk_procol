@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VABUUK | একাডেমি - The University of Silence</title>
+    
+    <!-- Core Engine -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@300;400;500;600;700&family=Outfit:wght@200;300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vabuuk: {
+                            void: '#0F172A',
+                            void_deep: '#020617',
+                            paper: '#F2F0E9',
+                            paper_dim: '#E5E2D6',
+                            saffron: '#D97706',
+                            saffron_glow: '#F59E0B',
+                            stone: '#57534E',
+                            ink: '#1E293B'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                        bengali: ['Noto Serif Bengali', 'serif'],
+                        mono: ['Space Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'progress': 'progress 1s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                        },
+                        progress: {
+                            '0%': { width: '0%' },
+                            '100%': { width: 'var(--target-width)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D97706; }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.7);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+        }
+        
+        .light-glass {
+            background: rgba(242, 240, 233, 0.9);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        .timeline-line {
+            background: linear-gradient(to bottom, #D97706 0%, rgba(217, 119, 6, 0.2) 100%);
+        }
+    </style>
+</head>
+<body class="bg-vabuuk-void text-vabuuk-paper antialiased transition-colors duration-700 overflow-x-hidden selection:bg-vabuuk-saffron selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- 1. SYLLABUS DATA (From 00_VABUUK_SYLLUBUS.pdf) ---
+        const SYLLABUS = [
+            {
+                id: 1,
+                week: "WEEK 1",
+                title: { en: "The Noise", bn: "কোলাহল" },
+                theme: "Diagnosis & Detox",
+                desc: "Identifying the invisible chains of algorithmic addiction.",
+                lectures: [
+                    "1.1 The Dopamine Trap: Why you scroll.",
+                    "1.2 Cognitive Audit: Measuring your 'Brain Rot'."
+                ],
+                exercise: {
+                    type: "audit",
+                    title: "The Dopamine Audit",
+                    question: "List 3 apps that drain you, but give nothing back."
+                }
+            },
+            {
+                id: 2,
+                week: "WEEK 2",
+                title: { en: "The Illusion", bn: "বিভ্রম" },
+                theme: "Deconstruction",
+                desc: "Breaking down the false narratives of 'Success' and 'Hustle'.",
+                lectures: [
+                    "2.1 The Myth of More: Why happiness is subtraction.",
+                    "2.2 The Steelman Argument: Empathy as a weapon."
+                ],
+                exercise: {
+                    type: "steelman",
+                    title: "Steelman Generator",
+                    question: "Write the strongest argument FOR something you hate."
+                }
+            },
+            {
+                id: 3,
+                week: "WEEK 3",
+                title: { en: "The Bridge", bn: "সেতু" },
+                theme: "Technical Friction",
+                desc: "Building the physical and digital walls to protect focus.",
+                lectures: [
+                    "3.1 Friction Design: Making bad habits hard.",
+                    "3.2 The Grayscale Protocol: Killing the color triggers."
+                ],
+                exercise: {
+                    type: "friction",
+                    title: "Friction Plan",
+                    question: "What is one physical barrier you will build today?"
+                }
+            },
+            {
+                id: 4,
+                week: "WEEK 4",
+                title: { en: "The Boatman", bn: "মাঝি" },
+                theme: "Flow & Legacy",
+                desc: "Now that the noise is gone, what do we do with the silence?",
+                lectures: [
+                    "4.1 Silence as a Skill: Navigating discomfort.",
+                    "4.2 Deep Work Protocols: 4 hours > 8 hours."
+                ],
+                exercise: {
+                    type: "timer",
+                    title: "Monk Mode Timer",
+                    question: "Enter deep work state."
+                }
+            }
+        ];
+
+        // --- 2. COMPONENTS ---
+
+        const Icon = ({ name, size = 20, className }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        const ProgressBar = ({ progress }) => (
+            <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
+                <div 
+                    className="h-full bg-vabuuk-saffron transition-all duration-1000 ease-out"
+                    style={{ width: `${progress}%` }}
+                ></div>
+            </div>
+        );
+
+        // --- 3. MAIN APP ---
+        function App() {
+            const [lang, setLang] = useState('en');
+            const [activeWeek, setActiveWeek] = useState(1);
+            const [completedWeeks, setCompletedWeeks] = useState([]);
+            const [exerciseInput, setExerciseInput] = useState('');
+            const [timerActive, setTimerActive] = useState(false);
+            const [timeLeft, setTimeLeft] = useState(25 * 60); // 25 min
+
+            // Persistence
+            useEffect(() => {
+                const savedProgress = localStorage.getItem('vabuuk_academy_progress');
+                if (savedProgress) setCompletedWeeks(JSON.parse(savedProgress));
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('vabuuk_academy_progress', JSON.stringify(completedWeeks));
+            }, [completedWeeks]);
+
+            // Timer Logic (Week 4)
+            useEffect(() => {
+                let interval = null;
+                if (timerActive && timeLeft > 0) {
+                    interval = setInterval(() => setTimeLeft(timeLeft - 1), 1000);
+                } else if (timeLeft === 0) {
+                    setTimerActive(false);
+                    completeWeek(4);
+                }
+                return () => clearInterval(interval);
+            }, [timerActive, timeLeft]);
+
+            const completeWeek = (id) => {
+                if (!completedWeeks.includes(id)) {
+                    setCompletedWeeks([...completedWeeks, id]);
+                    if (id < 4) setActiveWeek(id + 1);
+                }
+                setExerciseInput(''); 
+            };
+
+            const formatTime = (seconds) => {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${m}:${s < 10 ? '0' : ''}${s}`;
+            };
+
+            const currentModule = SYLLABUS.find(w => w.id === activeWeek);
+            const progress = (completedWeeks.length / 4) * 100;
+
+            return (
+                <div className="min-h-screen bg-vabuuk-void text-vabuuk-paper font-sans selection:bg-vabuuk-saffron selection:text-white flex flex-col md:flex-row">
+                    
+                    {/* LEFT SIDEBAR: CURRICULUM MAP */}
+                    <aside className="w-full md:w-80 border-r border-white/5 bg-vabuuk-void_deep relative z-20 flex flex-col h-screen sticky top-0">
+                        <div className="p-6 border-b border-white/5">
+                            <div className="flex items-center gap-3 mb-6">
+                                <div className="w-8 h-8 bg-vabuuk-saffron text-white flex items-center justify-center rounded font-serif font-bold">V</div>
+                                <div>
+                                    <h1 className="font-serif font-bold tracking-wider">ACADEMY</h1>
+                                    <p className="text-[9px] opacity-50 tracking-[0.2em] font-mono">EST. 2026</p>
+                                </div>
+                            </div>
+                            
+                            <div className="mb-2 flex justify-between text-xs opacity-60 font-mono">
+                                <span>PROGRESS</span>
+                                <span>{Math.round(progress)}%</span>
+                            </div>
+                            <ProgressBar progress={progress} />
+                        </div>
+
+                        <div className="flex-1 overflow-y-auto p-6 space-y-8 relative">
+                            {/* Timeline Line */}
+                            <div className="absolute left-9 top-8 bottom-8 w-px bg-white/10 z-0"></div>
+
+                            {SYLLABUS.map((week) => {
+                                const isLocked = week.id > 1 && !completedWeeks.includes(week.id - 1) && activeWeek !== week.id;
+                                const isCompleted = completedWeeks.includes(week.id);
+                                const isActive = activeWeek === week.id;
+
+                                return (
+                                    <div 
+                                        key={week.id} 
+                                        onClick={() => !isLocked && setActiveWeek(week.id)}
+                                        className={`relative z-10 pl-10 cursor-pointer group ${isLocked ? 'opacity-40 pointer-events-none' : ''}`}
+                                    >
+                                        {/* Node */}
+                                        <div className={`absolute left-0 top-1 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-all duration-300 ${isActive ? 'border-vabuuk-saffron bg-vabuuk-saffron text-white' : isCompleted ? 'border-vabuuk-saffron bg-vabuuk-void text-vabuuk-saffron' : 'border-white/20 bg-vabuuk-void text-transparent'}`}>
+                                            {isCompleted && <Icon name="check" size={12} />}
+                                            {isLocked && <Icon name="lock" size={10} className="text-white/40" />}
+                                        </div>
+
+                                        <h3 className={`text-xs font-bold font-mono tracking-widest mb-1 transition-colors ${isActive ? 'text-vabuuk-saffron' : 'text-white/50 group-hover:text-white'}`}>
+                                            {week.week}
+                                        </h3>
+                                        <h2 className={`font-serif font-bold text-lg transition-colors ${isActive ? 'text-white' : 'text-white/70'}`}>
+                                            {week.title[lang]}
+                                        </h2>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        
+                        <div className="p-6 border-t border-white/5">
+                            <button 
+                                onClick={() => setLang(lang === 'en' ? 'bn' : 'en')}
+                                className="w-full py-2 border border-white/10 rounded hover:bg-white/5 text-xs font-bold uppercase tracking-widest transition"
+                            >
+                                Switch to {lang === 'en' ? 'Bengali' : 'English'}
+                            </button>
+                        </div>
+                    </aside>
+
+                    {/* MAIN CONTENT AREA */}
+                    <main className="flex-1 relative h-screen overflow-y-auto bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]">
+                        <div className="max-w-4xl mx-auto p-6 md:p-12 lg:p-20">
+                            
+                            {/* Breadcrumbs */}
+                            <div className="flex items-center gap-2 text-xs font-mono opacity-40 mb-8 uppercase tracking-widest">
+                                <span>Syllabus</span>
+                                <Icon name="chevron-right" size={12} />
+                                <span>{currentModule.week}</span>
+                                <Icon name="chevron-right" size={12} />
+                                <span>{currentModule.theme}</span>
+                            </div>
+
+                            {/* Header */}
+                            <header className="mb-12 animate-float">
+                                <h1 className={`text-5xl md:text-7xl font-serif font-bold mb-6 ${lang === 'bn' ? 'font-bengali' : ''}`}>
+                                    {currentModule.title[lang]}
+                                </h1>
+                                <p className="text-xl md:text-2xl font-light opacity-80 leading-relaxed border-l-4 border-vabuuk-saffron pl-6">
+                                    {currentModule.desc}
+                                </p>
+                            </header>
+
+                            {/* Lecture Content */}
+                            <div className="grid grid-cols-1 gap-6 mb-12">
+                                {currentModule.lectures.map((lec, i) => (
+                                    <div key={i} className="glass-panel p-6 rounded-xl flex items-center gap-4 hover:border-vabuuk-saffron/30 transition-colors group cursor-pointer">
+                                        <div className="w-12 h-12 bg-white/5 rounded-full flex items-center justify-center text-vabuuk-saffron group-hover:bg-vabuuk-saffron group-hover:text-white transition-colors">
+                                            <Icon name="play" size={20} fill="currentColor" />
+                                        </div>
+                                        <div>
+                                            <h4 className="font-bold text-lg">{lec}</h4>
+                                            <p className="text-xs opacity-50 font-mono mt-1">VIDEO • 12 MINS</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Interactive Exercise */}
+                            <section className="bg-gradient-to-br from-white/5 to-transparent border border-white/10 p-8 rounded-2xl relative overflow-hidden">
+                                <div className="absolute top-0 right-0 p-4 opacity-10">
+                                    <Icon name="pen-tool" size={100} />
+                                </div>
+
+                                <div className="relative z-10">
+                                    <h3 className="text-vabuuk-saffron font-bold uppercase tracking-widest text-xs mb-2">
+                                        Active Recall Protocol
+                                    </h3>
+                                    <h2 className="text-2xl font-serif font-bold mb-6">
+                                        {currentModule.exercise.title}
+                                    </h2>
+                                    <p className="mb-6 opacity-80">{currentModule.exercise.question}</p>
+
+                                    {/* Widget Switcher */}
+                                    {currentModule.exercise.type === 'timer' ? (
+                                        <div className="text-center py-8">
+                                            <div className="text-6xl font-mono font-bold mb-8 tracking-tighter">
+                                                {formatTime(timeLeft)}
+                                            </div>
+                                            <button 
+                                                onClick={() => setTimerActive(!timerActive)}
+                                                className={`px-8 py-3 rounded-full font-bold uppercase tracking-widest transition ${timerActive ? 'bg-red-500 hover:bg-red-600' : 'bg-vabuuk-saffron hover:bg-yellow-600'} text-white shadow-lg`}
+                                            >
+                                                {timerActive ? 'Abort Session' : 'Initiate Deep Work'}
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-4">
+                                            <textarea 
+                                                className="w-full bg-black/20 border border-white/10 rounded-lg p-4 text-white placeholder-white/20 focus:outline-none focus:border-vabuuk-saffron min-h-[120px]"
+                                                placeholder="Type your reflection here..."
+                                                value={exerciseInput}
+                                                onChange={(e) => setExerciseInput(e.target.value)}
+                                            ></textarea>
+                                            <div className="flex justify-end">
+                                                <button 
+                                                    onClick={() => completeWeek(activeWeek)}
+                                                    disabled={!exerciseInput.trim() && !completedWeeks.includes(activeWeek)}
+                                                    className={`px-6 py-3 rounded-full font-bold uppercase tracking-widest text-xs flex items-center gap-2 transition ${!exerciseInput.trim() && !completedWeeks.includes(activeWeek) ? 'bg-white/10 text-white/30 cursor-not-allowed' : 'bg-vabuuk-saffron text-white hover:bg-yellow-600 shadow-lg'}`}
+                                                >
+                                                    {completedWeeks.includes(activeWeek) ? 'Update Journal' : 'Complete Module'} <Icon name="arrow-right" size={14} />
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </section>
+
+                            {/* Footer */}
+                            <footer className="mt-20 pt-8 border-t border-white/5 text-center opacity-40 text-xs font-mono uppercase tracking-widest">
+                                <p>Logic in Thought • Freedom in Belief</p>
+                            </footer>
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

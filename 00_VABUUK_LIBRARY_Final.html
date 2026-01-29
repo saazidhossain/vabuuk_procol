@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VABUUK | পাঠাগার - The Digital Athenaeum</title>
+    
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@300;400;500;700&family=Outfit:wght@200;300;400;500&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vabuuk: {
+                            void: '#0F172A',      // The Infinite Depth
+                            void_deep: '#020617', // Darker Void
+                            paper: '#F2F0E9',     // The Scroll
+                            saffron: '#D97706',   // The Monk
+                            gold: '#C5A059',      // The Value
+                            clay: '#9CA3AF'
+                        }
+                    },
+                    fontFamily: {
+                        serif: ['"Cinzel"', '"Noto Serif Bengali"', 'serif'],
+                        sans: ['"Outfit"', '"Hind Siliguri"', 'sans-serif'],
+                        mono: ['"Space Mono"', 'monospace']
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'glow': 'glow 4s ease-in-out infinite'
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        glow: {
+                            '0%, 100%': { opacity: 0.5 },
+                            '50%': { opacity: 1 },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { background-color: #0F172A; color: #F2F0E9; }
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .grain-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+            pointer-events: none; z-index: 0;
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #D97706; border-radius: 2px; }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+    <div class="grain-overlay"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { Search, Book, FileText, Download, Lock, Star, ChevronRight, X, Filter, LayoutGrid, List, ArrowLeft, Database, Anchor, Triangle } = lucide;
+
+        // --- DATA LAYER: THE KNOWLEDGE BASE ---
+        const RESOURCES = [
+            {
+                id: 'res_001',
+                type: 'pdf',
+                category: 'architect',
+                title: { en: "VABUUK Intellectual Playbook", bn: "ভাবুক ইন্টেলেকচুয়াল প্লেবুক" },
+                desc: { en: "The complete operational manual for building a High-Value Content Entity.", bn: "একটি হাই-ভ্যালু কন্টেন্ট এনটিটি তৈরির সম্পূর্ণ অপারেশনাল ম্যানুয়াল।" },
+                pages: 14,
+                size: "2.4 MB",
+                access: "Free",
+                tags: ["Strategy", "Branding", "Operations"],
+                icon: Triangle,
+                downloadLink: "VABUUK_Intellectual_Content_Entity_Playbook.pdf"
+            },
+            {
+                id: 'res_002',
+                type: 'pdf',
+                category: 'boatman',
+                title: { en: "The VABUUK Syllabus (Vol 1)", bn: "ভাবুক সিলেবাস (খণ্ড ১)" },
+                desc: { en: "4-Week Cognitive Architecture to balance Logic and Faith.", bn: "যুক্তি এবং বিশ্বাসের ভারসাম্য বজায় রাখার ৪-সপ্তাহের কগনিটিভ আর্কিটেকচার।" },
+                pages: 6,
+                size: "1.1 MB",
+                access: "Scholar",
+                tags: ["Philosophy", "Curriculum", "Self-Mastery"],
+                icon: Anchor,
+                downloadLink: "00_VABUUK_SYLLUBUS.pdf"
+            },
+            {
+                id: 'res_003',
+                type: 'doc',
+                category: 'bridge',
+                title: { en: "The Manifesto: Logic & Faith", bn: "ম্যানিফেস্টো: যুক্তি ও বিশ্বাস" },
+                desc: { en: "The founding constitution of the VABUUK movement.", bn: "ভাবুক আন্দোলনের প্রতিষ্ঠাতা সংবিধান।" },
+                pages: 3,
+                size: "HTML",
+                access: "Free",
+                tags: ["Core", "Values"],
+                icon: FileText,
+                downloadLink: "00_VABUUK_Manifesto.html"
+            },
+            {
+                id: 'res_004',
+                type: 'tool',
+                category: 'architect',
+                title: { en: "Sentinel: Notion Dashboard", bn: "সেন্টিনেল নোশন ড্যাশবোর্ড" },
+                desc: { en: "The productivity system used to manage VABUUK.", bn: "ভাবুক পরিচালনার জন্য ব্যবহৃত প্রোডাক্টিভিটি সিস্টেম।" },
+                pages: "Template",
+                size: "Link",
+                access: "Premium",
+                tags: ["Productivity", "System"],
+                icon: Database,
+                downloadLink: "#"
+            }
+        ];
+
+        const TEXT = {
+            en: {
+                nav_home: "Back to Nexus",
+                header_title: "The Digital Athenaeum",
+                header_sub: "Access the blueprints of the VABUUK architecture.",
+                search_place: "Search the archives...",
+                filter_all: "All Assets",
+                filter_arch: "Architect (Tech)",
+                filter_boat: "Boatman (Wisdom)",
+                filter_bridge: "Bridge (Core)",
+                btn_download: "Download Asset",
+                btn_preview: "Quick Preview",
+                btn_locked: "Scholar Access Only",
+                footer: "Knowledge is leverage. Use it."
+            },
+            bn: {
+                nav_home: "নেক্সাসে ফিরে যান",
+                header_title: "ডিজিটাল পাঠাগার",
+                header_sub: "ভাবুক আর্কিটেকচারের ব্লুপ্রিন্ট অ্যাক্সেস করুন।",
+                search_place: "আর্কাইভ অনুসন্ধান করুন...",
+                filter_all: "সকল সম্পদ",
+                filter_arch: "স্থপতি (টেক)",
+                filter_boat: "মাঝি (প্রজ্ঞা)",
+                filter_bridge: "সেতু (মূল)",
+                btn_download: "ডাউনলোড করুন",
+                btn_preview: "প্রিভিউ দেখুন",
+                btn_locked: "শুধুমাত্র স্কলারদের জন্য",
+                footer: "জ্ঞানই শক্তি। এটি ব্যবহার করুন।"
+            }
+        };
+
+        const Icon = ({ name, size = 24, className }) => {
+            const LucideIcon = name;
+            return <LucideIcon size={size} className={className} />;
+        };
+
+        const App = () => {
+            const [lang, setLang] = useState('en');
+            const [search, setSearch] = useState('');
+            const [filter, setFilter] = useState('all');
+            const [viewMode, setViewMode] = useState('grid'); // 'grid' or 'list'
+            const [selectedItem, setSelectedItem] = useState(null);
+
+            const T = TEXT[lang];
+
+            const filteredResources = useMemo(() => {
+                return RESOURCES.filter(item => {
+                    const matchesSearch = item.title[lang].toLowerCase().includes(search.toLowerCase()) || 
+                                          item.desc[lang].toLowerCase().includes(search.toLowerCase());
+                    const matchesFilter = filter === 'all' || item.category === filter;
+                    return matchesSearch && matchesFilter;
+                });
+            }, [search, filter, lang]);
+
+            return (
+                <div className="min-h-screen flex flex-col relative z-10 font-sans selection:bg-vabuuk-saffron selection:text-white">
+                    
+                    {/* NAVBAR */}
+                    <nav className="fixed top-0 w-full z-40 bg-vabuuk-void/80 backdrop-blur-md border-b border-white/5">
+                        <div className="max-w-7xl mx-auto px-6 h-20 flex items-center justify-between">
+                            <a href="00_VABUUK_NEXUS_home.html" className="flex items-center gap-2 text-sm font-bold text-slate-400 hover:text-vabuuk-saffron transition">
+                                <Icon name={ArrowLeft} size={16} /> {T.nav_home}
+                            </a>
+                            <div className="flex items-center gap-4">
+                                <button onClick={() => setLang(lang === 'en' ? 'bn' : 'en')} className="px-3 py-1 border border-white/10 rounded-full text-xs font-serif hover:bg-white/5 transition text-slate-300">
+                                    {lang === 'en' ? 'বাংলা' : 'ENG'}
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* HEADER */}
+                    <header className="pt-32 pb-12 px-6 max-w-7xl mx-auto w-full text-center">
+                        <div className="inline-flex items-center gap-2 px-3 py-1 bg-vabuuk-saffron/10 text-vabuuk-saffron rounded-full border border-vabuuk-saffron/20 mb-6 animate-fade-in">
+                            <Icon name={Book} size={14} />
+                            <span className="text-[10px] font-bold tracking-widest uppercase">Library v2.0</span>
+                        </div>
+                        <h1 className="text-4xl md:text-6xl font-serif font-bold text-white mb-4 tracking-tight">{T.header_title}</h1>
+                        <p className="text-slate-400 text-lg max-w-2xl mx-auto">{T.header_sub}</p>
+                    </header>
+
+                    {/* CONTROLS */}
+                    <section className="px-6 mb-12 sticky top-20 z-30">
+                        <div className="max-w-7xl mx-auto glass-panel rounded-2xl p-4 flex flex-col md:flex-row gap-4 justify-between items-center">
+                            
+                            {/* Search */}
+                            <div className="relative w-full md:w-96 group">
+                                <Icon name={Search} size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-vabuuk-saffron transition" />
+                                <input 
+                                    type="text" 
+                                    placeholder={T.search_place} 
+                                    value={search}
+                                    onChange={(e) => setSearch(e.target.value)}
+                                    className="w-full bg-black/20 border border-white/10 rounded-xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-vabuuk-saffron/50 transition"
+                                />
+                            </div>
+
+                            {/* Filters */}
+                            <div className="flex gap-2 overflow-x-auto w-full md:w-auto pb-2 md:pb-0 hide-scrollbar">
+                                {[
+                                    {id: 'all', label: T.filter_all},
+                                    {id: 'architect', label: T.filter_arch},
+                                    {id: 'boatman', label: T.filter_boat},
+                                    {id: 'bridge', label: T.filter_bridge}
+                                ].map(f => (
+                                    <button 
+                                        key={f.id} 
+                                        onClick={() => setFilter(f.id)}
+                                        className={`px-4 py-2 rounded-lg text-xs font-bold whitespace-nowrap transition ${filter === f.id ? 'bg-vabuuk-saffron text-white shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-400 hover:bg-white/10'}`}
+                                    >
+                                        {f.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* View Toggle */}
+                            <div className="hidden md:flex gap-1 bg-black/20 p-1 rounded-lg border border-white/5">
+                                <button onClick={() => setViewMode('grid')} className={`p-2 rounded ${viewMode === 'grid' ? 'bg-white/10 text-white' : 'text-slate-500'}`}><Icon name={LayoutGrid} size={16} /></button>
+                                <button onClick={() => setViewMode('list')} className={`p-2 rounded ${viewMode === 'list' ? 'bg-white/10 text-white' : 'text-slate-500'}`}><Icon name={List} size={16} /></button>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* ASSET GRID */}
+                    <main className="px-6 pb-24 max-w-7xl mx-auto w-full flex-1">
+                        <div className={viewMode === 'grid' ? "grid md:grid-cols-2 lg:grid-cols-3 gap-6" : "space-y-4"}>
+                            
+                            {filteredResources.map(res => (
+                                <div 
+                                    key={res.id} 
+                                    onClick={() => setSelectedItem(res)}
+                                    className={`group relative glass-panel rounded-2xl p-6 hover:border-vabuuk-saffron/40 transition duration-500 cursor-pointer overflow-hidden ${viewMode === 'list' ? 'flex items-center gap-6' : ''}`}
+                                >
+                                    {/* Icon/Thumbnail */}
+                                    <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-4 md:mb-0 transition-transform group-hover:scale-110 ${
+                                        res.category === 'architect' ? 'bg-blue-900/20 text-blue-400' : 
+                                        res.category === 'boatman' ? 'bg-emerald-900/20 text-emerald-400' : 
+                                        'bg-vabuuk-saffron/20 text-vabuuk-saffron'
+                                    }`}>
+                                        <Icon name={res.icon} size={24} />
+                                    </div>
+
+                                    {/* Content */}
+                                    <div className="flex-1">
+                                        <div className="flex justify-between items-start mb-2">
+                                            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 border border-white/5 px-2 py-1 rounded">{res.type}</span>
+                                            {res.access === 'Premium' && <Icon name={Lock} size={14} className="text-vabuuk-gold" />}
+                                        </div>
+                                        <h3 className="font-serif text-xl font-bold text-white mb-2 leading-tight group-hover:text-vabuuk-saffron transition">{res.title[lang]}</h3>
+                                        <p className="text-sm text-slate-400 leading-relaxed mb-4 line-clamp-2">{res.desc[lang]}</p>
+                                        
+                                        <div className="flex items-center gap-4 text-xs font-mono text-slate-500">
+                                            <span>{res.size}</span>
+                                            <span>•</span>
+                                            <span>{res.pages} Pages</span>
+                                        </div>
+                                    </div>
+
+                                    {/* Hover Action */}
+                                    <div className="absolute inset-0 bg-gradient-to-t from-vabuuk-void via-transparent to-transparent opacity-0 group-hover:opacity-60 transition duration-500"></div>
+                                    <div className="absolute bottom-6 right-6 opacity-0 group-hover:opacity-100 transition duration-500 translate-y-4 group-hover:translate-y-0">
+                                        <button className="w-10 h-10 rounded-full bg-vabuuk-saffron text-white flex items-center justify-center shadow-xl">
+                                            <Icon name={Download} size={18} />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    </main>
+
+                    {/* DETAIL MODAL */}
+                    {selectedItem && (
+                        <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
+                            <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedItem(null)}></div>
+                            <div className="relative w-full max-w-2xl bg-vabuuk-void border border-white/10 rounded-2xl shadow-2xl p-8 animate-fade-in-up">
+                                <button onClick={() => setSelectedItem(null)} className="absolute top-4 right-4 text-slate-500 hover:text-white"><Icon name={X} size={24} /></button>
+                                
+                                <div className="flex gap-6 mb-8">
+                                    <div className={`w-20 h-20 rounded-2xl flex items-center justify-center ${
+                                        selectedItem.category === 'architect' ? 'bg-blue-900/20 text-blue-400' : 
+                                        selectedItem.category === 'boatman' ? 'bg-emerald-900/20 text-emerald-400' : 
+                                        'bg-vabuuk-saffron/20 text-vabuuk-saffron'
+                                    }`}>
+                                        <Icon name={selectedItem.icon} size={40} />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2 mb-2">
+                                            <span className="text-xs font-bold text-vabuuk-saffron uppercase tracking-widest">{selectedItem.category}</span>
+                                            <span className="w-1 h-1 rounded-full bg-slate-600"></span>
+                                            <span className="text-xs text-slate-500">{selectedItem.type.toUpperCase()}</span>
+                                        </div>
+                                        <h2 className="text-3xl font-serif font-bold text-white mb-2">{selectedItem.title[lang]}</h2>
+                                        <p className="text-slate-400">{selectedItem.desc[lang]}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 mb-8 flex-wrap">
+                                    {selectedItem.tags.map(tag => (
+                                        <span key={tag} className="px-3 py-1 rounded-full bg-white/5 border border-white/5 text-xs text-slate-300">#{tag}</span>
+                                    ))}
+                                </div>
+
+                                <div className="flex gap-4">
+                                    <a 
+                                        href={selectedItem.downloadLink} 
+                                        download={selectedItem.type === 'pdf'}
+                                        className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-lg font-bold transition ${
+                                            selectedItem.access === 'Premium' 
+                                            ? 'bg-white/5 text-slate-500 cursor-not-allowed' 
+                                            : 'bg-vabuuk-saffron text-white hover:bg-orange-600'
+                                        }`}
+                                    >
+                                        {selectedItem.access === 'Premium' ? <Icon name={Lock} size={16} /> : <Icon name={Download} size={16} />}
+                                        {selectedItem.access === 'Premium' ? T.btn_locked : T.btn_download}
+                                    </a>
+                                    <button className="flex-1 flex items-center justify-center gap-2 py-3 rounded-lg border border-white/10 text-white hover:bg-white/5 transition">
+                                        <Icon name={Star} size={16} /> Save to Favorites
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+
+                    {/* FOOTER */}
+                    <footer className="py-8 text-center text-slate-600 text-xs font-mono border-t border-white/5 bg-black/20">
+                        {T.footer}
+                    </footer>
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

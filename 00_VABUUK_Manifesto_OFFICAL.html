@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VABUUK | ইশতেহার - The Constitution</title>
+    
+    <!-- Core Engine -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@300;400;500;600;700&family=Outfit:wght@200;300;400;500;600&family=Space+Mono:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vabuuk: {
+                            void: '#0F172A',
+                            void_deep: '#020617',
+                            paper: '#F2F0E9',
+                            paper_dim: '#E5E2D6',
+                            saffron: '#D97706',
+                            saffron_glow: '#F59E0B',
+                            stone: '#57534E',
+                            ink: '#1E293B'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                        bengali: ['Noto Serif Bengali', 'serif'],
+                        mono: ['Space Mono', 'monospace'],
+                    },
+                    animation: {
+                        'float': 'float 8s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'scroll': 'scroll 2s ease-in-out infinite',
+                        'fade-up': 'fadeUp 1s ease-out forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        scroll: {
+                            '0%': { transform: 'translateY(0)', opacity: 1 },
+                            '100%': { transform: 'translateY(10px)', opacity: 0 },
+                        },
+                        fadeUp: {
+                            '0%': { opacity: 0, transform: 'translateY(20px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #020617; }
+        ::-webkit-scrollbar-thumb { background: #D97706; }
+
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .split-bg {
+            background: linear-gradient(90deg, #0F172A 50%, #F2F0E9 50%);
+        }
+
+        .text-vertical {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+        }
+
+        /* Smooth Anchor Scrolling */
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="bg-vabuuk-void text-vabuuk-paper antialiased overflow-x-hidden selection:bg-vabuuk-saffron selection:text-white">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- 1. CONTENT DATA ---
+        const MANIFESTO = {
+            preamble: {
+                title: "THE CHAOS",
+                text: "The digital world is fractured. On one side, the Pure Logicist worships data but starves the soul. On the other, the Blind Believer drowns in emotion, rejecting reason. We are the Third Perspective."
+            },
+            parable: {
+                architect: {
+                    title: "THE ARCHITECT",
+                    role: "Logic • Structure • Data",
+                    desc: "He builds the bridge. He knows the math of survival. He dissects the myth to find the bone. Without him, we are lost in superstition."
+                },
+                boatman: {
+                    title: "THE BOATMAN",
+                    role: "Faith • Flow • Intuition",
+                    desc: "He sails the river. He knows the currents of the heart. He accepts the mystery of existence. Without him, we are trapped in dry calculation."
+                }
+            },
+            synthesis: {
+                title: "THE SYNTHESIS",
+                quote: { en: "Logic in Thought, Freedom in Belief.", bn: "ভাবনায় যুক্তি, বিশ্বাসে মুক্তি" },
+                desc: "VABUUK is the bridge and the boat. We use empirical logic to navigate the world, and spiritual wisdom to find meaning within it."
+            },
+            pledge: {
+                title: "THE PLEDGE",
+                items: [
+                    "I will not attack the person; I will dissect the idea.",
+                    "I will verify before I share.",
+                    "I will seek the Steelman argument.",
+                    "I will build more than I destroy."
+                ]
+            }
+        };
+
+        // --- 2. COMPONENTS ---
+
+        const Icon = ({ name, size = 20, className }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        const Reveal = ({ children, delay = 0 }) => {
+            const ref = useRef(null);
+            const [isVisible, setIsVisible] = useState(false);
+
+            useEffect(() => {
+                const observer = new IntersectionObserver(([entry]) => {
+                    if (entry.isIntersecting) setIsVisible(true);
+                }, { threshold: 0.2 });
+                if (ref.current) observer.observe(ref.current);
+                return () => observer.disconnect();
+            }, []);
+
+            return (
+                <div ref={ref} className={`transition-all duration-1000 transform ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-20'}`} style={{ transitionDelay: `${delay}ms` }}>
+                    {children}
+                </div>
+            );
+        };
+
+        // --- 3. MAIN APP ---
+        function App() {
+            const [signed, setSigned] = useState(false);
+            const [audioEnabled, setAudioEnabled] = useState(false);
+            const [scrollProgress, setScrollProgress] = useState(0);
+
+            // Scroll Listener
+            useEffect(() => {
+                const handleScroll = () => {
+                    const totalScroll = document.documentElement.scrollTop;
+                    const windowHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                    const scroll = `${totalScroll / windowHeight}`;
+                    setScrollProgress(Number(scroll));
+                }
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            // Persistence
+            useEffect(() => {
+                const isSigned = localStorage.getItem('vabuuk_manifesto_signed');
+                if (isSigned) setSigned(true);
+            }, []);
+
+            const handleSign = () => {
+                setSigned(true);
+                localStorage.setItem('vabuuk_manifesto_signed', 'true');
+            };
+
+            return (
+                <div className="min-h-screen font-sans">
+                    
+                    {/* PROGRESS BAR */}
+                    <div className="fixed top-0 left-0 h-1 bg-vabuuk-saffron z-50 transition-all duration-100" style={{ width: `${scrollProgress * 100}%` }}></div>
+
+                    {/* NAV (Minimal) */}
+                    <nav className="fixed top-0 w-full z-40 p-6 flex justify-between items-center mix-blend-difference text-white">
+                        <div className="font-serif font-bold tracking-widest text-xl">VABUUK</div>
+                        <div className="flex items-center gap-4">
+                            <button 
+                                onClick={() => setAudioEnabled(!audioEnabled)}
+                                className={`p-2 rounded-full border border-white/20 transition ${audioEnabled ? 'bg-vabuuk-saffron text-white' : 'opacity-50 hover:opacity-100'}`}
+                            >
+                                <Icon name={audioEnabled ? "volume-2" : "volume-x"} size={16} />
+                            </button>
+                            <span className="text-xs font-mono uppercase tracking-widest opacity-60">The Constitution</span>
+                        </div>
+                    </nav>
+
+                    {/* SECTION 1: THE PREAMBLE (Text Focus) */}
+                    <section className="min-h-screen flex flex-col justify-center items-center text-center px-6 relative overflow-hidden bg-vabuuk-void">
+                        <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]"></div>
+                        
+                        <Reveal>
+                            <div className="w-px h-24 bg-vabuuk-saffron mx-auto mb-8"></div>
+                            <h1 className="text-6xl md:text-9xl font-serif font-bold text-vabuuk-paper opacity-90 mb-8 tracking-tighter">
+                                CHAOS
+                            </h1>
+                            <p className="max-w-2xl mx-auto text-xl md:text-2xl font-light leading-relaxed text-vabuuk-paper/70 font-serif">
+                                {MANIFESTO.preamble.text}
+                            </p>
+                        </Reveal>
+
+                        <div className="absolute bottom-10 animate-scroll opacity-50">
+                            <Icon name="arrow-down" />
+                        </div>
+                    </section>
+
+                    {/* SECTION 2: THE SPLIT (Architect vs Boatman) */}
+                    <section className="min-h-screen relative flex flex-col md:flex-row">
+                        
+                        {/* LEFT: ARCHITECT (Dark/Logic) */}
+                        <div className="w-full md:w-1/2 bg-vabuuk-void text-vabuuk-paper flex flex-col justify-center p-12 border-r border-white/5 relative group">
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-5"></div>
+                            <Reveal>
+                                <div className="mb-6 text-vabuuk-saffron">
+                                    <Icon name="triangle" size={48} />
+                                </div>
+                                <h2 className="text-4xl font-serif font-bold mb-2 tracking-widest">{MANIFESTO.parable.architect.title}</h2>
+                                <p className="text-xs font-mono uppercase tracking-[0.3em] opacity-50 mb-8">{MANIFESTO.parable.architect.role}</p>
+                                <p className="text-lg font-light leading-relaxed opacity-80 border-l-2 border-vabuuk-saffron pl-6">
+                                    "{MANIFESTO.parable.architect.desc}"
+                                </p>
+                            </Reveal>
+                        </div>
+
+                        {/* RIGHT: BOATMAN (Light/Faith) */}
+                        <div className="w-full md:w-1/2 bg-vabuuk-paper text-vabuuk-void flex flex-col justify-center p-12 relative group">
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/washi.png')] opacity-30"></div>
+                            <Reveal delay={200}>
+                                <div className="mb-6 text-vabuuk-saffron">
+                                    <Icon name="waves" size={48} />
+                                </div>
+                                <h2 className="text-4xl font-serif font-bold mb-2 tracking-widest">{MANIFESTO.parable.boatman.title}</h2>
+                                <p className="text-xs font-mono uppercase tracking-[0.3em] opacity-50 mb-8">{MANIFESTO.parable.boatman.role}</p>
+                                <p className="text-lg font-light leading-relaxed opacity-80 border-l-2 border-vabuuk-saffron pl-6">
+                                    "{MANIFESTO.parable.boatman.desc}"
+                                </p>
+                            </Reveal>
+                        </div>
+
+                        {/* CENTER: THE DIVISION */}
+                        <div className="absolute left-1/2 top-0 bottom-0 w-px bg-vabuuk-saffron hidden md:block transform -translate-x-1/2 z-10">
+                            <div className="sticky top-1/2 -translate-y-1/2 w-8 h-8 bg-vabuuk-saffron rounded-full flex items-center justify-center text-vabuuk-void font-bold shadow-[0_0_20px_rgba(217,119,6,0.5)]">
+                                VS
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* SECTION 3: THE SYNTHESIS (Merging) */}
+                    <section className="min-h-screen bg-vabuuk-void_deep text-center flex flex-col justify-center items-center px-6 relative">
+                        <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-vabuuk-paper to-transparent opacity-10"></div>
+                        
+                        <Reveal>
+                            <div className="w-20 h-20 border-2 border-vabuuk-saffron rounded-full flex items-center justify-center text-vabuuk-saffron mb-12 animate-pulse-slow mx-auto">
+                                <Icon name="infinity" size={40} />
+                            </div>
+                            
+                            <h2 className="text-xs font-mono uppercase tracking-[0.5em] text-vabuuk-saffron mb-6">The Synthesis</h2>
+                            
+                            <h1 className="text-4xl md:text-7xl font-serif font-bold text-white mb-4 leading-tight">
+                                {MANIFESTO.synthesis.quote.en}
+                            </h1>
+                            <h1 className="text-2xl md:text-5xl font-serif font-bold text-white/60 mb-12 font-bengali">
+                                {MANIFESTO.synthesis.quote.bn}
+                            </h1>
+                            
+                            <p className="max-w-xl mx-auto text-lg opacity-60 font-light leading-relaxed">
+                                {MANIFESTO.synthesis.desc}
+                            </p>
+                        </Reveal>
+                    </section>
+
+                    {/* SECTION 4: THE PLEDGE (Interaction) */}
+                    <section className="min-h-screen bg-vabuuk-paper text-vabuuk-void flex flex-col justify-center items-center px-6 py-20">
+                        <div className="max-w-2xl w-full">
+                            <Reveal>
+                                <h2 className="text-3xl font-serif font-bold mb-12 text-center border-b-2 border-vabuuk-void pb-6">
+                                    {MANIFESTO.pledge.title}
+                                </h2>
+
+                                <div className="space-y-6 mb-12">
+                                    {MANIFESTO.pledge.items.map((item, i) => (
+                                        <div key={i} className="flex items-start gap-4 text-xl font-light">
+                                            <span className="text-vabuuk-saffron font-bold text-2xl">0{i+1}</span>
+                                            <p>{item}</p>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="bg-white p-8 rounded-xl shadow-2xl border border-black/5 text-center">
+                                    {!signed ? (
+                                        <>
+                                            <p className="text-sm font-mono uppercase tracking-widest opacity-60 mb-6">
+                                                Do you accept these terms?
+                                            </p>
+                                            <button 
+                                                onClick={handleSign}
+                                                className="w-full bg-vabuuk-void text-white py-4 rounded-lg font-bold text-lg hover:bg-vabuuk-saffron transition-colors flex items-center justify-center gap-3 group"
+                                            >
+                                                <span>Sign the Manifesto</span>
+                                                <Icon name="pen-tool" className="group-hover:rotate-12 transition-transform" />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="animate-fade-up">
+                                            <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                                                <Icon name="check" size={32} />
+                                            </div>
+                                            <h3 className="text-2xl font-serif font-bold mb-2">Welcome to the Sanctuary</h3>
+                                            <p className="opacity-60 mb-6">Your pledge has been recorded.</p>
+                                            <div className="flex gap-4 justify-center">
+                                                <button className="px-6 py-2 border border-current rounded-full text-sm font-bold uppercase hover:bg-vabuuk-void hover:text-white transition">
+                                                    Enter Library
+                                                </button>
+                                                <button className="px-6 py-2 bg-vabuuk-saffron text-white rounded-full text-sm font-bold uppercase hover:bg-vabuuk-void transition shadow-lg">
+                                                    Start Academy
+                                                </button>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </Reveal>
+                        </div>
+                    </section>
+
+                    {/* FOOTER */}
+                    <footer className="bg-vabuuk-void_deep text-white/30 py-12 text-center font-mono text-xs uppercase tracking-widest">
+                        <p>© 2026 Vabuuk Foundation</p>
+                    </footer>
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

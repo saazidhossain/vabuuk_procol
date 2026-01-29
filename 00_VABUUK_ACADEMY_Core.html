@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VABUUK | একাডেমি - The School of Integrated Thought</title>
+    
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Noto+Serif+Bengali:wght@300;400;500;700&family=Outfit:wght@200;300;400;500&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vabuuk: {
+                            void: '#0F172A',      // The Infinite Depth
+                            void_deep: '#020617', // Darker Void
+                            paper: '#F2F0E9',     // The Ancient Scroll
+                            saffron: '#D97706',   // Wisdom/Monk
+                            saffron_glow: '#F59E0B',
+                            stone: '#57534E',
+                            gold: '#C5A059'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                        bengali: ['Noto Serif Bengali', 'serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'shimmer': 'shimmer 3s linear infinite',
+                        'reveal': 'reveal 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-5px)' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-1000px 0' },
+                            '100%': { backgroundPosition: '1000px 0' },
+                        },
+                        reveal: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        }
+                    },
+                    backgroundImage: {
+                        'grain': "url('data:image/svg+xml,%3Csvg viewBox=\"0 0 200 200\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cfilter id=\"noiseFilter\"%3E%3CfeTurbulence type=\"fractalNoise\" baseFrequency=\"0.65\" numOctaves=\"3\" stitchTiles=\"stitch\"/%3E%3C/filter%3E%3Crect width=\"100%25\" height=\"100%25\" filter=\"url(%23noiseFilter)\" opacity=\"0.05\"/%3E%3C/svg%3E')",
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #D97706; border-radius: 2px; }
+        
+        .arch-mask {
+            mask-image: url("data:image/svg+xml,%3Csvg width='200' height='300' viewBox='0 0 200 300' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 0C155.228 0 200 44.7715 200 100V300H0V100C0 44.7715 44.7715 0 100 0Z' fill='black'/%3E%3C/svg%3E");
+            mask-size: cover;
+            mask-repeat: no-repeat;
+            -webkit-mask-image: url("data:image/svg+xml,%3Csvg width='200' height='300' viewBox='0 0 200 300' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M100 0C155.228 0 200 44.7715 200 100V300H0V100C0 44.7715 44.7715 0 100 0Z' fill='black'/%3E%3C/svg%3E");
+            -webkit-mask-size: 100% 100%;
+        }
+    </style>
+</head>
+<body class="bg-vabuuk-void text-vabuuk-paper antialiased transition-colors duration-700">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- DATA REPOSITORY ---
+        const TRANSLATIONS = {
+            en: {
+                nav_home: "Sanctuary",
+                nav_library: "Library",
+                hero_title: "The School of Integrated Thought",
+                hero_sub: "We do not teach you what to think. We teach you how to think, and how to believe.",
+                path_logic: "The Path of the Architect",
+                path_logic_desc: "Constructing rigorous mental frameworks.",
+                path_faith: "The Path of the Boatman",
+                path_faith_desc: "Navigating the river of the soul.",
+                cta_enroll: "Begin Journey",
+                cta_syllabus: "View Syllabus",
+                stats_students: "Thinkers Enrolled",
+                stats_hours: "Hours of Content",
+                footer_quote: "Logic builds the house. Faith makes it a home."
+            },
+            bn: {
+                nav_home: "অভয়ারণ্য",
+                nav_library: "পাঠাগার",
+                hero_title: "সমন্বিত চিন্তার পাঠশালা",
+                hero_sub: "আমরা আপনাকে কী ভাবতে হবে তা শেখাই না। আমরা শেখাই কীভাবে ভাবতে হয় এবং কীভাবে বিশ্বাস করতে হয়।",
+                path_logic: "স্থপতির পথ (যুক্তি)",
+                path_logic_desc: "নির্ভুল মানসিক কাঠামো নির্মাণ।",
+                path_faith: "মাঝির পথ (বিশ্বাস)",
+                path_faith_desc: "আত্মার নদীর স্রোতে নেভিগেশন।",
+                cta_enroll: "যাত্রা শুরু করুন",
+                cta_syllabus: "সিলেবাস দেখুন",
+                stats_students: "জন ভাবুক",
+                stats_hours: "ঘন্টার কন্টেন্ট",
+                footer_quote: "যুক্তি ঘর বানায়, বিশ্বাস তাকে বাড়ি বানায়।"
+            }
+        };
+
+        const COURSES = [
+            {
+                id: 1,
+                axis: 'architect',
+                title: { en: "Digital Stoicism", bn: "ডিজিটাল স্টোইসিজম" },
+                price: "৳1,200",
+                duration: "4 Weeks",
+                level: "Intermediate",
+                desc: { en: "Reclaim your dopamine. A tactical guide to surviving the algorithmic age without losing your soul.", bn: "অ্যালগরিদমের যুগে নিজের ডোপামিন এবং আত্মাকে বাঁচানোর ব্যবহারিক গাইড।" },
+                modules: ["Dopamine Detox Protocols", "The Fortress of Focus", "Algorithmic Resistance"],
+                icon: "shield"
+            },
+            {
+                id: 2,
+                axis: 'architect',
+                title: { en: "The 'Bishoy Da' Protocol", bn: "'বিষয় দা' প্রোটোকল" },
+                price: "৳1,500",
+                duration: "3 Weeks",
+                level: "Advanced",
+                desc: { en: "Master the art of 'Steelman' arguments. Learn to dissect ideas without attacking the person.", bn: "ব্যক্তিগত আক্রমণ না করে কীভাবে আইডিয়া ব্যবচ্ছেদ করতে হয়, তার মাস্টারক্লাস।" },
+                modules: ["Ad Hominem Defense", "The Steelman Technique", "Constructive Deconstruction"],
+                icon: "sword"
+            },
+            {
+                id: 3,
+                axis: 'boatman',
+                title: { en: "Institutional Sufism", bn: "প্রাতিষ্ঠানিক সুফিজম" },
+                price: "৳2,000",
+                duration: "6 Weeks",
+                level: "All Levels",
+                desc: { en: "Modern spirituality for the logical mind. Bridging the gap between Dargah and Data.", bn: "যৌক্তিক মনের জন্য আধুনিক আধ্যাত্মিকতা। দরগা এবং ডেটার সেতুবন্ধন।" },
+                modules: ["The Geometry of Faith", "Silence as a Skill", "Finding Flow"],
+                icon: "anchor"
+            }
+        ];
+
+        // --- COMPONENTS ---
+
+        const Icon = ({ name, size = 20, className }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        const Navbar = ({ lang, setLang }) => {
+            const T = TRANSLATIONS[lang];
+            return (
+                <nav className="fixed top-0 w-full z-50 px-6 py-4 border-b border-white/5 bg-vabuuk-void/80 backdrop-blur-md">
+                    <div className="max-w-7xl mx-auto flex justify-between items-center">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 bg-vabuuk-saffron text-white flex items-center justify-center font-serif font-bold text-xl rounded-t-xl rounded-b-none">V</div>
+                            <span className="font-serif tracking-widest text-lg hidden md:block">VABUUK <span className="text-vabuuk-saffron text-xs">ACADEMY</span></span>
+                        </div>
+                        <div className="flex gap-6 text-xs tracking-widest font-bold uppercase opacity-80">
+                            <a href="00_VABUUK_NEXUS_home.html" className="hover:text-vabuuk-saffron transition">{T.nav_home}</a>
+                            <a href="00_Vabuuk_Library_Official.html" className="hover:text-vabuuk-saffron transition">{T.nav_library}</a>
+                        </div>
+                        <button 
+                            onClick={() => setLang(lang === 'en' ? 'bn' : 'en')}
+                            className="w-8 h-8 rounded-full border border-white/20 flex items-center justify-center text-[10px] font-bold hover:bg-white hover:text-black transition"
+                        >
+                            {lang === 'en' ? 'BN' : 'EN'}
+                        </button>
+                    </div>
+                </nav>
+            );
+        };
+
+        const CourseCard = ({ course, lang, index }) => {
+            const T = TRANSLATIONS[lang];
+            return (
+                <div className="group relative animate-reveal" style={{ animationDelay: `${index * 150}ms` }}>
+                    {/* The Card Structure */}
+                    <div className={`h-full p-1 rounded-2xl bg-gradient-to-b from-white/10 to-transparent hover:from-vabuuk-saffron/50 transition-all duration-500`}>
+                        <div className="h-full bg-vabuuk-void_deep rounded-xl p-6 border border-white/5 relative overflow-hidden flex flex-col">
+                            
+                            {/* Background Symbol */}
+                            <div className="absolute -right-10 -top-10 text-white/5 transform rotate-12 group-hover:rotate-0 transition-transform duration-700">
+                                <Icon name={course.icon} size={150} />
+                            </div>
+
+                            {/* Axis Badge */}
+                            <div className={`inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] uppercase font-bold tracking-widest w-max mb-4 border ${course.axis === 'architect' ? 'border-blue-500/30 text-blue-400' : 'border-vabuuk-saffron/30 text-vabuuk-saffron'}`}>
+                                <Icon name={course.axis === 'architect' ? 'triangle' : 'waves'} size={10} />
+                                {course.axis === 'architect' ? 'The Architect' : 'The Boatman'}
+                            </div>
+
+                            {/* Title */}
+                            <h3 className={`text-2xl font-serif font-bold mb-2 group-hover:text-vabuuk-saffron transition-colors ${lang === 'bn' ? 'font-bengali' : ''}`}>
+                                {course.title[lang]}
+                            </h3>
+                            
+                            {/* Meta */}
+                            <div className="flex gap-4 text-xs opacity-50 mb-6 font-mono">
+                                <span>{course.duration}</span>
+                                <span>•</span>
+                                <span>{course.level}</span>
+                            </div>
+
+                            {/* Description */}
+                            <p className={`text-sm opacity-70 leading-relaxed mb-6 flex-grow ${lang === 'bn' ? 'font-bengali' : ''}`}>
+                                {course.desc[lang]}
+                            </p>
+
+                            {/* Module Preview */}
+                            <div className="space-y-2 mb-8 border-l border-white/10 pl-4">
+                                {course.modules.map((mod, i) => (
+                                    <div key={i} className="text-xs opacity-60 flex items-center gap-2">
+                                        <div className="w-1 h-1 bg-vabuuk-saffron rounded-full"></div> {mod}
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Action */}
+                            <div className="mt-auto flex items-center justify-between pt-4 border-t border-white/5">
+                                <span className="text-xl font-bold font-serif">{course.price}</span>
+                                <button className="px-6 py-2 bg-white/5 hover:bg-vabuuk-saffron text-white rounded-lg text-xs font-bold uppercase tracking-widest transition-all hover:shadow-[0_0_15px_rgba(217,119,6,0.5)]">
+                                    {T.cta_enroll}
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            const [lang, setLang] = useState('en');
+            const T = TRANSLATIONS[lang];
+
+            return (
+                <div className="min-h-screen relative overflow-x-hidden selection:bg-vabuuk-saffron selection:text-white">
+                    
+                    {/* Ambient Background */}
+                    <div className="fixed inset-0 pointer-events-none z-0">
+                        <div className="absolute inset-0 bg-grain opacity-20"></div>
+                        <div className="absolute top-0 left-1/4 w-[500px] h-[500px] bg-vabuuk-saffron/10 rounded-full blur-[120px] animate-pulse"></div>
+                    </div>
+
+                    <Navbar lang={lang} setLang={setLang} />
+
+                    {/* HERO SECTION */}
+                    <header className="relative pt-32 pb-20 px-6 z-10">
+                        <div className="max-w-7xl mx-auto text-center">
+                            <div className="inline-block mb-6 animate-float">
+                                <div className="w-16 h-24 border border-vabuuk-saffron/50 rounded-t-full flex items-center justify-center mx-auto backdrop-blur-sm">
+                                    <div className="w-2 h-2 bg-vabuuk-saffron rounded-full shadow-[0_0_10px_#D97706]"></div>
+                                </div>
+                            </div>
+                            
+                            <h1 className={`text-4xl md:text-6xl lg:text-7xl font-serif font-bold mb-6 bg-clip-text text-transparent bg-gradient-to-r from-vabuuk-paper via-white to-vabuuk-paper ${lang === 'bn' ? 'font-bengali leading-tight' : ''}`}>
+                                {T.hero_title}
+                            </h1>
+                            
+                            <p className={`max-w-2xl mx-auto text-lg opacity-60 font-light mb-12 ${lang === 'bn' ? 'font-bengali' : ''}`}>
+                                {T.hero_sub}
+                            </p>
+
+                            <div className="flex justify-center gap-12 text-center opacity-70 font-mono text-xs tracking-widest">
+                                <div>
+                                    <span className="block text-2xl font-bold text-vabuuk-saffron font-serif">2,500+</span>
+                                    {T.stats_students}
+                                </div>
+                                <div>
+                                    <span className="block text-2xl font-bold text-vabuuk-saffron font-serif">150+</span>
+                                    {T.stats_hours}
+                                </div>
+                            </div>
+                        </div>
+                    </header>
+
+                    {/* PATHWAYS SPLIT */}
+                    <section className="px-6 py-12 relative z-10">
+                        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-4 mb-16">
+                            {/* Architect Path */}
+                            <div className="p-8 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-6 group hover:border-blue-500/30 transition">
+                                <div className="w-12 h-12 rounded-full bg-blue-900/20 text-blue-400 flex items-center justify-center">
+                                    <Icon name="triangle" />
+                                </div>
+                                <div>
+                                    <h3 className={`text-xl font-bold mb-1 group-hover:text-blue-400 transition ${lang === 'bn' ? 'font-bengali' : ''}`}>{T.path_logic}</h3>
+                                    <p className="text-sm opacity-50">{T.path_logic_desc}</p>
+                                </div>
+                            </div>
+
+                            {/* Boatman Path */}
+                            <div className="p-8 rounded-2xl bg-white/5 border border-white/5 flex items-center gap-6 group hover:border-vabuuk-saffron/30 transition">
+                                <div className="w-12 h-12 rounded-full bg-vabuuk-saffron/20 text-vabuuk-saffron flex items-center justify-center">
+                                    <Icon name="waves" />
+                                </div>
+                                <div>
+                                    <h3 className={`text-xl font-bold mb-1 group-hover:text-vabuuk-saffron transition ${lang === 'bn' ? 'font-bengali' : ''}`}>{T.path_faith}</h3>
+                                    <p className="text-sm opacity-50">{T.path_faith_desc}</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* COURSE GRID */}
+                        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            {COURSES.map((course, index) => (
+                                <CourseCard key={course.id} course={course} lang={lang} index={index} />
+                            ))}
+                        </div>
+                    </section>
+
+                    {/* FOOTER */}
+                    <footer className="py-12 border-t border-white/5 text-center relative z-10 bg-black/20">
+                        <div className="w-10 h-10 bg-vabuuk-saffron mx-auto rounded-full flex items-center justify-center text-white font-serif font-bold mb-6">V</div>
+                        <p className={`text-sm font-serif italic opacity-50 ${lang === 'bn' ? 'font-bengali' : ''}`}>"{T.footer_quote}"</p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

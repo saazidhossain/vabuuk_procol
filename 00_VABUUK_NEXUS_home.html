@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VABUUK | ভাবুক - The Intellectual Sanctuary</title>
+    
+    <!-- Core Engine -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;700&family=Noto+Serif+Bengali:wght@300;500;700&family=Outfit:wght@300;400;500&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        vabuuk: {
+                            void: '#0F172A',      // Deep Slate
+                            paper: '#F2F0E9',     // Ancient Paper
+                            saffron: '#D97706',   // Wisdom/Monk
+                            saffron_dim: '#92400e',
+                            stone: '#57534E',
+                            gold: '#C5A059'
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        serif: ['Cinzel', 'serif'],
+                        bengali: ['Noto Serif Bengali', 'serif'],
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'breathe': 'breathe 8s ease-in-out infinite',
+                        'fade-in-up': 'fadeInUp 1s cubic-bezier(0.2, 0.8, 0.2, 1) forwards',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        breathe: {
+                            '0%, 100%': { opacity: '0.8', transform: 'scale(1)' },
+                            '50%': { opacity: '1', transform: 'scale(1.02)' },
+                        },
+                        fadeInUp: {
+                            '0%': { opacity: '0', transform: 'translateY(40px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { font-family: 'Outfit', sans-serif; }
+        .font-bengali { font-family: 'Noto Serif Bengali', serif; }
+        
+        .glass-premium {
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-light {
+            background: rgba(242, 240, 233, 0.8);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        /* Cinematic Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #0F172A; }
+        ::-webkit-scrollbar-thumb { background: #57534E; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #D97706; }
+
+        .text-gradient-gold {
+            background: linear-gradient(to right, #F2F0E9, #C5A059, #F2F0E9);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-size: 200% auto;
+            animation: shine 5s linear infinite;
+        }
+        @keyframes shine { to { background-position: 200% center; } }
+    </style>
+</head>
+<body class="bg-vabuuk-void text-vabuuk-paper antialiased selection:bg-vabuuk-saffron selection:text-white transition-colors duration-700">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // --- 1. DATA LAYER ---
+        const TRANSLATIONS = {
+            en: {
+                nav_manifesto: "The Manifesto",
+                nav_academy: "Academy",
+                nav_store: "Library",
+                hero_title: "Logic in Thought,\nFreedom in Belief.",
+                hero_sub: "An intellectual sanctuary for the modern mind. Bridging the gap between dry logic and blind faith.",
+                cta_primary: "Enter the Sanctuary",
+                cta_secondary: "Read Manifesto",
+                calc_title: "Mind Noise Calculator",
+                calc_q1: "Daily Screen Time (Hrs)",
+                calc_q2: "Anxiety Level (1-10)",
+                calc_result: "Your Cognitive Load",
+                calc_rec: "Recommended Protocol",
+                fomo_action: "joined the",
+                fomo_item: "Inner Circle",
+                footer_motto: "A Bridge for the Mind, A Boat for the Heart."
+            },
+            bn: {
+                nav_manifesto: "ম্যানিফেস্টো",
+                nav_academy: "একাডেমি",
+                nav_store: "লাইব্রেরি",
+                hero_title: "ভাবনায় যুক্তি,\nবিশ্বাসে মুক্তি।",
+                hero_sub: "আধুনিক মনের জন্য একটি বুদ্ধিবৃত্তিক অভয়ারণ্য। শুষ্ক নাস্তিকতা এবং অন্ধ বিশ্বাসের মাঝখানের সেতু।",
+                cta_primary: "অভয়ারণ্যে প্রবেশ করুন",
+                cta_secondary: "ম্যানিফেস্টো পড়ুন",
+                calc_title: "মানসিক অস্থিরতা পরিমাপক",
+                calc_q1: "দৈনিক স্ক্রিন টাইম (ঘণ্টা)",
+                calc_q2: "দুশ্চিন্তার মাত্রা (১-১০)",
+                calc_result: "আপনার মানসিক চাপ",
+                calc_rec: "পরামর্শ",
+                fomo_action: "যুক্ত হয়েছেন",
+                fomo_item: "ইনার সার্কেলে",
+                footer_motto: "মনের জন্য সেতু, হৃদয়ের জন্য নৌকা।"
+            }
+        };
+
+        const COURSES = [
+            { id: 1, title: "Digital Stoicism", bn: "ডিজিটাল স্টোইসিজম", price: "৳1,200", type: "Flagship", icon: "Brain" },
+            { id: 2, title: "The Art of Silence", bn: "নীরবতার শিল্প", price: "৳850", type: "Meditation", icon: "Moon" },
+            { id: 3, title: "Critical Thinking 101", bn: "যুক্তি ও বিচার", price: "৳1,500", type: "Logic", icon: "Scale" },
+        ];
+
+        const RECENT_JOINS = ["Tanvir from Uttara", "Sarah from Gulshan", "Rifat from Sylhet", "Nadia from Chittagong", "Arafat from Mirpur"];
+
+        // --- 2. SUB-COMPONENTS ---
+
+        const Icon = ({ name, size = 24, className }) => {
+            useEffect(() => {
+                if (window.lucide) window.lucide.createIcons();
+            }, [name]);
+            return <i data-lucide={name} width={size} height={size} className={className}></i>;
+        };
+
+        const Reveal = ({ children, delay = 0 }) => {
+            const ref = useRef(null);
+            const [isVisible, setIsVisible] = useState(false);
+
+            useEffect(() => {
+                const observer = new IntersectionObserver(([entry]) => {
+                    if (entry.isIntersecting) setIsVisible(true);
+                }, { threshold: 0.1 });
+                if (ref.current) observer.observe(ref.current);
+                return () => observer.disconnect();
+            }, []);
+
+            return (
+                <div ref={ref} className={`transform transition-all duration-1000 ${isVisible ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0'}`} style={{ transitionDelay: `${delay}ms` }}>
+                    {children}
+                </div>
+            );
+        };
+
+        // --- 3. MAIN APPLICATION ---
+        function App() {
+            const [lang, setLang] = useState('en');
+            const [timeMode, setTimeMode] = useState('day');
+            const [scrolled, setScrolled] = useState(false);
+            const [screenTime, setScreenTime] = useState(6);
+            const [anxiety, setAnxiety] = useState(5);
+            const [fomo, setFomo] = useState(null);
+
+            const T = TRANSLATIONS[lang];
+
+            // Chrono-Logic & Scroll
+            useEffect(() => {
+                const updateTime = () => {
+                    const hour = new Date().getHours();
+                    setTimeMode((hour >= 6 && hour < 18) ? 'day' : 'night');
+                };
+                updateTime();
+
+                const handleScroll = () => setScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            // Persistence
+            useEffect(() => {
+                const savedLang = localStorage.getItem('vabuuk_lang');
+                if (savedLang) setLang(savedLang);
+            }, []);
+
+            useEffect(() => {
+                localStorage.setItem('vabuuk_lang', lang);
+            }, [lang]);
+
+            // FOMO Engine
+            useEffect(() => {
+                const interval = setInterval(() => {
+                    const name = RECENT_JOINS[Math.floor(Math.random() * RECENT_JOINS.length)];
+                    setFomo({ name, action: T.fomo_action, item: T.fomo_item });
+                    setTimeout(() => setFomo(null), 6000);
+                }, 20000);
+                return () => clearInterval(interval);
+            }, [lang, T]);
+
+            // Calculator Logic
+            const noiseScore = Math.min(100, (screenTime * 5) + (anxiety * 7));
+            const getRecommendation = () => {
+                if (noiseScore > 70) return lang === 'en' ? "Urgent Detox Required" : "জরুরি ডিটক্স প্রয়োজন";
+                if (noiseScore > 40) return lang === 'en' ? "Practice Mindfulness" : "মাইন্ডফুলনেস চর্চা করুন";
+                return lang === 'en' ? "Maintain Balance" : "ভারসাম্য বজায় রাখুন";
+            };
+
+            return (
+                <div className={`min-h-screen relative overflow-x-hidden ${timeMode === 'night' ? 'bg-vabuuk-void text-vabuuk-paper' : 'bg-vabuuk-paper text-vabuuk-void'}`}>
+                    
+                    {/* AMBIENT BACKGROUND */}
+                    <div className="fixed inset-0 pointer-events-none z-0">
+                        <div className={`absolute top-[-20%] left-[-10%] w-[50vw] h-[50vw] rounded-full blur-[120px] opacity-20 ${timeMode === 'night' ? 'bg-vabuuk-saffron' : 'bg-vabuuk-gold'}`}></div>
+                        <div className="absolute bottom-[-20%] right-[-10%] w-[60vw] h-[60vw] rounded-full blur-[100px] opacity-10 bg-blue-900"></div>
+                        {/* Noise Texture */}
+                        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")` }}></div>
+                    </div>
+
+                    {/* NAVIGATION */}
+                    <nav className={`fixed top-0 w-full z-50 transition-all duration-500 ${scrolled ? (timeMode === 'night' ? 'glass-premium py-4' : 'glass-light py-4 shadow-sm') : 'py-8'}`}>
+                        <div className="max-w-7xl mx-auto px-6 flex justify-between items-center">
+                            <div className="flex items-center gap-3 cursor-pointer group">
+                                <div className="w-10 h-10 bg-vabuuk-saffron text-white flex items-center justify-center rounded-sm font-serif font-bold text-xl group-hover:rotate-45 transition-transform duration-500">V</div>
+                                <span className={`font-serif tracking-widest font-bold text-xl ${timeMode === 'night' ? 'text-white' : 'text-vabuuk-void'}`}>VABUUK</span>
+                            </div>
+                            
+                            <div className="hidden md:flex items-center gap-8 text-sm font-medium tracking-wide opacity-80">
+                                <a href="#" className="hover:text-vabuuk-saffron transition">{T.nav_manifesto}</a>
+                                <a href="#" className="hover:text-vabuuk-saffron transition">{T.nav_academy}</a>
+                                <a href="#" className="hover:text-vabuuk-saffron transition">{T.nav_store}</a>
+                            </div>
+
+                            <div className="flex items-center gap-4">
+                                <button 
+                                    onClick={() => setLang(lang === 'en' ? 'bn' : 'en')}
+                                    className={`px-4 py-1.5 rounded-full border text-xs font-bold uppercase transition hover:bg-vabuuk-saffron hover:text-white hover:border-transparent ${timeMode === 'night' ? 'border-white/20' : 'border-black/20'}`}
+                                >
+                                    {lang === 'en' ? 'বাং' : 'EN'}
+                                </button>
+                                <button className="bg-vabuuk-saffron hover:bg-vabuuk-saffron_dim text-white p-2 rounded-full shadow-[0_0_15px_rgba(217,119,6,0.5)] transition">
+                                    <Icon name="user" size={18} />
+                                </button>
+                            </div>
+                        </div>
+                    </nav>
+
+                    {/* HERO SECTION */}
+                    <header className="relative min-h-screen flex flex-col justify-center items-center text-center px-4 z-10 pt-20">
+                        <Reveal>
+                            <div className="mb-6 flex justify-center">
+                                <div className="h-16 w-px bg-vabuuk-saffron/50"></div>
+                            </div>
+                            <h1 className={`text-5xl md:text-7xl lg:text-8xl font-serif font-bold leading-[1.1] mb-8 ${lang === 'bn' ? 'font-bengali' : ''} ${timeMode === 'night' ? 'text-gradient-gold' : 'text-vabuuk-void'}`}>
+                                {T.hero_title.split('\n').map((line, i) => (
+                                    <span key={i} className="block">{line}</span>
+                                ))}
+                            </h1>
+                            <p className={`max-w-2xl mx-auto text-lg md:text-xl font-light leading-relaxed mb-12 opacity-80 ${lang === 'bn' ? 'font-bengali' : ''}`}>
+                                {T.hero_sub}
+                            </p>
+                            
+                            <div className="flex flex-col md:flex-row gap-6 justify-center items-center">
+                                <button className="group relative px-8 py-4 bg-vabuuk-saffron text-white rounded-none font-medium tracking-wider overflow-hidden">
+                                    <div className="absolute inset-0 w-full h-full bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-500"></div>
+                                    <span className="flex items-center gap-2">
+                                        {T.cta_primary} <Icon name="arrow-right" size={16} />
+                                    </span>
+                                </button>
+                                <button className={`flex items-center gap-2 hover:text-vabuuk-saffron transition-colors underline-offset-4 hover:underline ${timeMode === 'night' ? 'text-white' : 'text-vabuuk-void'}`}>
+                                    {T.cta_secondary}
+                                </button>
+                            </div>
+                        </Reveal>
+
+                        {/* Scroll Indicator */}
+                        <div className="absolute bottom-10 animate-bounce opacity-40">
+                            <Icon name="chevron-down" size={32} />
+                        </div>
+                    </header>
+
+                    {/* PHILOSOPHY GRID (The Bridge & Boat) */}
+                    <section className={`py-24 px-6 relative z-10 ${timeMode === 'night' ? 'bg-vabuuk-void/50' : 'bg-white/50'}`}>
+                        <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-24 items-center">
+                            
+                            {/* The Architect */}
+                            <Reveal delay={100}>
+                                <div className={`p-10 rounded-3xl border transition-all hover:border-vabuuk-saffron/50 group ${timeMode === 'night' ? 'glass-premium bg-slate-900/40' : 'glass-light bg-white/60'}`}>
+                                    <div className="w-16 h-16 bg-slate-800 rounded-full flex items-center justify-center text-vabuuk-saffron mb-8 group-hover:scale-110 transition-transform">
+                                        <Icon name="triangle" size={32} />
+                                    </div>
+                                    <h3 className="text-3xl font-serif font-bold mb-4">The Architect</h3>
+                                    <p className="opacity-70 leading-relaxed mb-6 font-light">
+                                        Representing Logic, Structure, and Empirical Truth. We build rigorous frameworks to deconstruct myths and analyze reality without bias.
+                                    </p>
+                                    <div className="h-px w-full bg-current opacity-10"></div>
+                                </div>
+                            </Reveal>
+
+                            {/* The Boatman */}
+                            <Reveal delay={300}>
+                                <div className={`p-10 rounded-3xl border transition-all hover:border-vabuuk-saffron/50 group ${timeMode === 'night' ? 'glass-premium bg-slate-900/40' : 'glass-light bg-white/60'}`}>
+                                    <div className="w-16 h-16 bg-vabuuk-saffron/20 text-vabuuk-saffron rounded-full flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+                                        <Icon name="waves" size={32} />
+                                    </div>
+                                    <h3 className="text-3xl font-serif font-bold mb-4">The Boatman</h3>
+                                    <p className="opacity-70 leading-relaxed mb-6 font-light">
+                                        Representing Faith, Flow, and Intuitive Wisdom. We understand that logic has limits, and the human soul requires a vessel to navigate the unknown.
+                                    </p>
+                                    <div className="h-px w-full bg-current opacity-10"></div>
+                                </div>
+                            </Reveal>
+
+                        </div>
+                    </section>
+
+                    {/* SMART WIDGET: Mind Noise Calculator */}
+                    <section className="py-24 px-4 bg-vabuuk-saffron text-white relative overflow-hidden">
+                        <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')]"></div>
+                        <div className="max-w-4xl mx-auto relative z-10">
+                            <Reveal>
+                                <div className="text-center mb-12">
+                                    <h2 className={`text-4xl font-serif font-bold mb-4 ${lang === 'bn' ? 'font-bengali' : ''}`}>{T.calc_title}</h2>
+                                    <div className="w-24 h-1 bg-white mx-auto opacity-50"></div>
+                                </div>
+
+                                <div className="bg-black/20 backdrop-blur-xl p-8 md:p-12 rounded-3xl border border-white/10 flex flex-col md:flex-row gap-12 items-center">
+                                    <div className="flex-1 w-full space-y-8">
+                                        <div>
+                                            <label className="block text-sm font-bold uppercase tracking-wider opacity-80 mb-4">{T.calc_q1}</label>
+                                            <input 
+                                                type="range" min="0" max="16" step="1" 
+                                                value={screenTime} onChange={(e) => setScreenTime(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
+                                            />
+                                            <div className="flex justify-between mt-2 text-xs opacity-60 font-mono">
+                                                <span>0 Hrs</span>
+                                                <span className="text-xl font-bold text-white opacity-100">{screenTime} Hrs</span>
+                                                <span>16+ Hrs</span>
+                                            </div>
+                                        </div>
+
+                                        <div>
+                                            <label className="block text-sm font-bold uppercase tracking-wider opacity-80 mb-4">{T.calc_q2}</label>
+                                            <input 
+                                                type="range" min="1" max="10" step="1" 
+                                                value={anxiety} onChange={(e) => setAnxiety(parseInt(e.target.value))}
+                                                className="w-full h-2 bg-white/30 rounded-lg appearance-none cursor-pointer accent-white"
+                                            />
+                                            <div className="flex justify-between mt-2 text-xs opacity-60 font-mono">
+                                                <span>Calm</span>
+                                                <span className="text-xl font-bold text-white opacity-100">{anxiety}/10</span>
+                                                <span>Panic</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="md:w-px md:h-64 w-full h-px bg-white/20"></div>
+
+                                    <div className="flex-1 text-center">
+                                        <div className="w-40 h-40 mx-auto rounded-full border-4 border-white/30 flex items-center justify-center mb-6 relative">
+                                            <div className="absolute inset-0 rounded-full border-4 border-white border-t-transparent animate-spin" style={{ animationDuration: '3s' }}></div>
+                                            <div className="text-4xl font-bold font-serif">{noiseScore}%</div>
+                                        </div>
+                                        <div className="text-sm uppercase tracking-widest opacity-70 mb-1">{T.calc_result}</div>
+                                        <div className={`text-2xl font-bold font-serif ${lang === 'bn' ? 'font-bengali' : ''}`}>{getRecommendation()}</div>
+                                        
+                                        <button className="mt-8 px-6 py-2 border border-white rounded-full hover:bg-white hover:text-vabuuk-saffron transition text-sm font-bold uppercase">
+                                            View Report
+                                        </button>
+                                    </div>
+                                </div>
+                            </Reveal>
+                        </div>
+                    </section>
+
+                    {/* ACADEMY / STORE */}
+                    <section className={`py-24 px-6 relative z-10 ${timeMode === 'night' ? 'bg-vabuuk-void' : 'bg-vabuuk-paper'}`}>
+                        <div className="max-w-7xl mx-auto">
+                            <div className="flex justify-between items-end mb-16">
+                                <div>
+                                    <h2 className="text-4xl font-serif font-bold mb-2">The Academy</h2>
+                                    <p className="opacity-60">Curated paths for the intellectual soul.</p>
+                                </div>
+                                <button className="hidden md:flex items-center gap-2 text-vabuuk-saffron font-bold hover:underline">
+                                    View All Courses <Icon name="arrow-up-right" size={16} />
+                                </button>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                                {COURSES.map((course, i) => (
+                                    <Reveal key={course.id} delay={i * 150}>
+                                        <div className={`group relative p-8 rounded-2xl border transition-all duration-500 hover:-translate-y-2 hover:shadow-2xl ${timeMode === 'night' ? 'border-white/10 hover:border-vabuuk-saffron/40 bg-slate-900/50' : 'border-black/5 hover:border-vabuuk-saffron/40 bg-white'}`}>
+                                            <div className="absolute top-6 right-6 opacity-20 group-hover:opacity-100 group-hover:text-vabuuk-saffron transition-all">
+                                                <Icon name={course.icon} size={32} />
+                                            </div>
+                                            <div className="text-xs font-bold uppercase tracking-widest text-vabuuk-saffron mb-4">{course.type}</div>
+                                            <h3 className={`text-2xl font-serif font-bold mb-2 ${lang === 'bn' ? 'font-bengali' : ''}`}>
+                                                {lang === 'en' ? course.title : course.bn}
+                                            </h3>
+                                            <div className="text-lg font-bold opacity-70 mb-6">{course.price}</div>
+                                            <button className="w-full py-3 rounded-lg border border-current opacity-60 hover:opacity-100 hover:bg-vabuuk-saffron hover:border-transparent hover:text-white transition flex items-center justify-center gap-2">
+                                                Enroll Now
+                                            </button>
+                                        </div>
+                                    </Reveal>
+                                ))}
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* FOOTER */}
+                    <footer className={`py-12 border-t text-center relative z-10 ${timeMode === 'night' ? 'border-white/10 bg-black/40' : 'border-black/5 bg-stone-200/50'}`}>
+                        <div className="w-12 h-12 bg-vabuuk-saffron mx-auto rounded-full flex items-center justify-center text-white font-serif font-bold text-2xl mb-6">V</div>
+                        <p className={`text-lg font-serif italic opacity-70 mb-8 ${lang === 'bn' ? 'font-bengali' : ''}`}>"{T.footer_motto}"</p>
+                        
+                        <div className="flex justify-center gap-6 opacity-50 mb-8">
+                            <Icon name="youtube" className="hover:text-vabuuk-saffron hover:opacity-100 cursor-pointer transition" />
+                            <Icon name="facebook" className="hover:text-vabuuk-saffron hover:opacity-100 cursor-pointer transition" />
+                            <Icon name="instagram" className="hover:text-vabuuk-saffron hover:opacity-100 cursor-pointer transition" />
+                            <Icon name="linkedin" className="hover:text-vabuuk-saffron hover:opacity-100 cursor-pointer transition" />
+                        </div>
+                        <p className="text-xs opacity-30 tracking-widest uppercase">© 2026 VABUUK Nexus. Dhaka, Bangladesh.</p>
+                    </footer>
+
+                    {/* FOMO NOTIFICATION */}
+                    {fomo && (
+                        <div className="fixed bottom-6 left-6 z-50 animate-fade-in-up">
+                            <div className={`p-4 rounded-xl shadow-2xl flex items-center gap-4 backdrop-blur-md border ${timeMode === 'night' ? 'bg-slate-900/80 border-white/10 text-white' : 'bg-white/90 border-black/5 text-slate-900'}`}>
+                                <div className="w-10 h-10 rounded-full bg-vabuuk-saffron/20 flex items-center justify-center text-vabuuk-saffron">
+                                    <Icon name="user-check" size={20} />
+                                </div>
+                                <div>
+                                    <p className="text-xs font-bold">{fomo.name}</p>
+                                    <p className="text-[10px] opacity-70">{fomo.action} <span className="text-vabuuk-saffron font-bold">{fomo.item}</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    )}
+                    
+                    {/* WHATSAPP CTA */}
+                    <a href="https://wa.me/8801700000000" target="_blank" className="fixed bottom-6 right-6 z-50 bg-[#25D366] text-white p-4 rounded-full shadow-2xl hover:scale-110 transition-transform duration-300 group">
+                        <Icon name="message-circle" size={28} />
+                        <span className="absolute right-full mr-3 top-1/2 -translate-y-1/2 bg-black text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 whitespace-nowrap transition">Chat with Architect</span>
+                    </a>
+
+                </div>
+            );
+        }
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
